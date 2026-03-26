@@ -1,0 +1,12 @@
+{
+  "name": "dnd-ai-dungeon-master",
+  "version": "1.0.0",
+  "description": "AI-powered D&D 5e game with Claude as Dungeon Master",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

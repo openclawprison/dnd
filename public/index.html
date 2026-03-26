@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D&D AI Dungeon Master</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4ede0;--card:#faf6ed;--panel:#eee7d6;--border:#d4c9ac;--border2:#c4b894;
+  --gold:#8a6d2b;--gold2:#6b5520;--text:#3a3428;--dim:#7a7060;--dimr:#9a9080;
+  --red:#8a3030;--grn:#3a6a3a;--purp:#5a4a7a;--accent:#c9a84c;
+  --f1:'Cinzel',Georgia,serif;--f2:'EB Garamond',Georgia,serif;
+}
+body{font-family:var(--f2);background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--panel)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+select{font-family:var(--f2)}
+button{font-family:var(--f1);transition:all 0.15s}
+button:hover{filter:brightness(1.1)}
+
+/* App */
+#app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* Creation */
+.create-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto;
+  background:linear-gradient(180deg,#f8f2e4 0%,#efe6d2 100%)}
+.create-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2rem;max-width:600px;width:100%;
+  box-shadow:0 2px 20px rgba(0,0,0,0.06)}
+.create-title{font-family:var(--f1);font-size:1.6rem;color:var(--gold);text-align:center;letter-spacing:0.1em}
+.create-sub{font-family:var(--f2);text-align:center;color:var(--dim);font-size:0.9rem;margin:0.3rem 0 1rem}
+.progress{display:flex;gap:4px;margin-bottom:1.3rem}
+.progress div{flex:1;height:3px;border-radius:2px;background:var(--border);transition:all 0.3s}
+.progress div.active{background:var(--gold)}
+.section-title{font-family:var(--f1);color:var(--gold);font-weight:600;margin-bottom:0.5rem;font-size:1rem}
+.opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem}
+.opt-btn{background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:0.6rem;cursor:pointer;text-align:center;transition:all 0.15s}
+.opt-btn:hover{border-color:var(--gold);background:#faf5e8}
+.opt-btn.sel{border-color:var(--gold);background:#f5ecd5;box-shadow:0 0 0 1px var(--gold)}
+.opt-name{font-family:var(--f1);color:var(--gold);font-size:0.88rem}
+.opt-sub{font-family:var(--f2);color:var(--dim);font-size:0.72rem;margin-top:2px}
+.desc{font-family:var(--f2);color:var(--text);font-size:0.88rem;font-style:italic;margin-top:0.5rem}
+.ab-row{display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.6rem;background:var(--panel);border-radius:6px;margin-bottom:4px;border:1px solid var(--border)}
+.ab-name{font-family:var(--f1);color:var(--gold);width:95px;font-size:0.84rem}
+.ab-sel{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:0.25rem 0.4rem;font-size:0.88rem}
+.name-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.7rem;color:var(--gold);font-size:1.1rem;font-family:var(--f1);text-align:center;outline:none;letter-spacing:0.05em;margin-bottom:0.7rem}
+.name-input:focus{border-color:var(--gold)}
+.nav-row{display:flex;justify-content:space-between;margin-top:1.5rem}
+.btn-pri{background:linear-gradient(135deg,var(--accent),var(--gold));color:#fff;border:none;border-radius:6px;padding:0.5rem 1.4rem;cursor:pointer;font-weight:700;font-size:0.84rem;letter-spacing:0.04em}
+.btn-pri:disabled{background:#ccc;cursor:default}
+.btn-sec{background:transparent;color:var(--dim);border:1px solid var(--border);border-radius:6px;padding:0.45rem 1rem;cursor:pointer;font-size:0.82rem}
+.btn-rand{background:transparent;border:1px dashed var(--border2);border-radius:6px;padding:0.35rem 1rem;color:var(--gold);font-family:var(--f1);font-size:0.78rem;cursor:pointer;display:block;margin:0 auto 1rem}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.stat-box{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:0.3rem;text-align:center}
+.stat-box .lbl{font-family:var(--f2);font-size:0.48rem;letter-spacing:0.1em;color:var(--dimr);text-transform:uppercase}
+.stat-box .val{font-family:var(--f1);font-size:1rem;color:var(--gold);font-weight:700}
+.stat-box .mod{font-family:var(--f2);font-size:0.68rem;color:var(--dim)}
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;font-size:0.88rem;color:var(--dim);margin-bottom:0.5rem}
+.review-grid span{color:var(--gold)}
+.divider{height:1px;background:var(--border);margin:0.5rem 0}
+
+/* Game */
+.game-wrap{flex:1;display:flex;overflow:hidden}
+.sidebar{width:250px;min-width:250px;background:var(--panel);border-right:1px solid var(--border);padding:0.8rem;overflow-y:auto;display:flex;flex-direction:column}
+.char-name{font-family:var(--f1);font-size:1.1rem;color:var(--gold)}
+.char-sub{font-family:var(--f2);font-size:0.74rem;color:var(--dimr);margin-bottom:0.6rem}
+.hp-row{display:flex;justify-content:space-between;font-size:0.74rem;margin-bottom:2px}
+.hp-track{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-bottom:8px}
+.hp-fill{height:100%;border-radius:3px;transition:width 0.5s}
+.mini-stats{display:flex;gap:4px;margin-bottom:8px}
+.mini-stat{flex:1;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:0.2rem;text-align:center}
+.mini-stat .lbl{font-size:0.45rem;letter-spacing:0.08em;color:var(--dimr)}
+.mini-stat .val{font-family:var(--f1);font-size:0.9rem;color:var(--gold);font-weight:700}
+.ab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:8px}
+.ab-box{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:0.2rem;text-align:center}
+.ab-box .lbl{font-size:0.44rem;letter-spacing:0.06em;color:var(--dimr)}
+.ab-box .val{font-family:var(--f1);font-size:0.88rem;color:var(--gold);font-weight:700}
+.ab-box .mod{font-size:0.62rem;color:var(--dim)}
+.side-label{font-size:0.5rem;letter-spacing:0.1em;color:var(--dimr);margin-bottom:2px}
+.side-val{font-family:var(--f1);color:var(--gold);font-size:0.88rem}
+.side-item{font-size:0.74rem;color:var(--dim)}
+.log-entry{font-size:0.7rem;padding:1px 0}
+
+.main-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.combat-banner{margin:0.6rem 1.2rem 0;background:linear-gradient(90deg,#f5e0e0,#faeaea,#f5e0e0);border:1px solid #d4a0a0;border-radius:6px;padding:0.4rem 0.8rem;text-align:center;font-family:var(--f1);color:var(--red);font-weight:700;font-size:0.82rem;letter-spacing:0.08em}
+.combat-foes{font-family:var(--f2);font-size:0.72rem;color:#8a5252;font-weight:400;margin-top:2px}
+.narrative{flex:1;overflow-y:auto;padding:1.3rem 1.8rem;line-height:1.75;font-size:1rem}
+.dm-msg{margin-bottom:1rem;animation:fadeUp 0.3s ease}
+.user-msg{background:rgba(90,74,122,0.06);border-radius:8px;padding:0.5rem 0.9rem;margin-bottom:1rem;border-left:3px solid var(--purp);animation:fadeUp 0.3s ease}
+.user-tag{font-family:var(--f1);color:var(--purp);font-size:0.6rem;letter-spacing:0.1em;margin-bottom:3px;font-weight:700}
+.status-msg{padding:0.8rem 0;font-family:var(--f1);font-size:0.88rem;color:var(--gold);animation:pulse 1.5s infinite}
+.opts-row{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem}
+.opt-chip{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.9rem;cursor:pointer;font-family:var(--f1);color:var(--gold);font-size:0.82rem}
+.opt-chip:hover{background:#f0e8d2;border-color:var(--gold)}
+.input-area{border-top:1px solid var(--border);padding:0.6rem 1.3rem;background:var(--panel);display:flex;gap:0.5rem}
+.text-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:0.55rem 0.75rem;font-family:var(--f2);color:var(--text);font-size:0.92rem;outline:none;resize:none}
+.text-input:focus{border-color:var(--gold)}
+.send-btn{background:linear-gradient(135deg,var(--accent),var(--gold));color:#fff;border:none;border-radius:6px;padding:0.4rem 1rem;cursor:pointer;font-family:var(--f1);font-weight:700;font-size:0.88rem;align-self:flex-end}
+.send-btn:disabled{background:#ccc;cursor:default}
+.slots{display:flex;gap:3px;margin-top:2px}
+.slot{font-size:1rem}
+.slot.full{color:var(--gold)}
+.slot.empty{color:var(--border)}
+
+@media(max-width:700px){
+  .sidebar{width:200px;min-width:200px;padding:0.5rem;font-size:0.85rem}
+  .narrative{padding:1rem}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ══════════════════════════════════════
+// DATA
+// ══════════════════════════════════════
+const RACES={
+  Human:{b:{str:1,dex:1,con:1,int:1,wis:1,cha:1},desc:"Versatile and ambitious, humans adapt to any calling.",spd:30},
+  Elf:{b:{dex:2},desc:"Graceful and long-lived, with keen senses.",spd:30},
+  Dwarf:{b:{con:2},desc:"Stout and sturdy, masters of stone and steel.",spd:25},
+  Halfling:{b:{dex:2},desc:"Small but brave, with uncanny luck.",spd:25},
+  "Half-Orc":{b:{str:2,con:1},desc:"Fierce and enduring, carrying orcish blood.",spd:30},
+  Tiefling:{b:{cha:2,int:1},desc:"Infernal heritage grants cunning charm.",spd:30},
+  Dragonborn:{b:{str:2,cha:1},desc:"Draconic warriors with proud lineage.",spd:30},
+};
+const CLASSES={
+  Fighter:{hd:10,hp0:10,ac:17,sp:false,feat:["Second Wind","Defense +1 AC"],eq:["Longsword","Shield","Chain Mail","Light Crossbow","20 Bolts"]},
+  Wizard:{hd:6,hp0:6,ac:10,sp:true,cantrips:["Fire Bolt","Mage Hand","Prestidigitation"],spells:["Magic Missile","Shield","Thunderwave","Mage Armor","Sleep"],slots:2,feat:["Arcane Recovery"],eq:["Quarterstaff","Spellbook","Component Pouch"]},
+  Rogue:{hd:8,hp0:8,ac:13,sp:false,feat:["Sneak Attack 1d6","Expertise","Thieves' Cant"],eq:["Rapier","Shortbow","20 Arrows","Leather Armor","Thieves' Tools"]},
+  Cleric:{hd:8,hp0:8,ac:18,sp:true,cantrips:["Sacred Flame","Guidance","Thaumaturgy"],spells:["Cure Wounds","Bless","Guiding Bolt","Healing Word"],slots:2,feat:["Turn Undead","Life Domain"],eq:["Mace","Scale Mail","Shield","Holy Symbol"]},
+  Ranger:{hd:10,hp0:10,ac:14,sp:false,feat:["Favored Enemy","Natural Explorer","Archery +2"],eq:["Longbow","20 Arrows","Leather Armor","2 Shortswords"]},
+  Paladin:{hd:10,hp0:10,ac:16,sp:false,feat:["Divine Sense","Lay on Hands 5hp"],eq:["Longsword","Shield","Chain Mail","Holy Symbol","5 Javelins"]},
+};
+const ABS=["str","dex","con","int","wis","cha"];
+const ABF={str:"Strength",dex:"Dexterity",con:"Constitution",int:"Intelligence",wis:"Wisdom",cha:"Charisma"};
+const ARR=[15,14,13,12,10,8];
+const mo=s=>Math.floor((s-10)/2);
+const fm=s=>{const m=mo(s);return m>=0?"+"+m:""+m;};
+const shuffle=a=>{const c=[...a];for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]];}return c;};
+const NAMES=["Aldric","Vexia","Thorn","Mirael","Kragmar","Lysara","Durnok","Faelith","Grimbold","Seraphine","Azrak","Elowen","Mordecai","Nyxara","Theron","Valdris","Isadora","Brom"];
+
+const $=id=>document.getElementById(id);
+const h=(tag,attrs={},children=[])=>{
+  const el=document.createElement(tag);
+  for(const[k,v]of Object.entries(attrs)){
+    if(k==="className")el.className=v;
+    else if(k.startsWith("on"))el.addEventListener(k.slice(2).toLowerCase(),v);
+    else if(k==="style"&&typeof v==="object")Object.assign(el.style,v);
+    else el.setAttribute(k,v);
+  }
+  for(const c of(Array.isArray(children)?children:[children])){
+    if(typeof c==="string")el.appendChild(document.createTextNode(c));
+    else if(c)el.appendChild(c);
+  }
+  return el;
+};
+
+// ══════════════════════════════════════
+// STATE
+// ══════════════════════════════════════
+let state={
+  screen:"create",step:0,race:"",cls:"",asgn:{str:"",dex:"",con:"",int:"",wis:"",cha:""},charName:"",
+  char:null,msgs:[],log:[],input:"",loading:false,opts:[],combat:false,enemies:[],status:""
+};
+
+// ══════════════════════════════════════
+// SAVE / LOAD
+// ══════════════════════════════════════
+const SAVE_KEY="dnd_ai_dm_save";
+function saveGame(){
+  try{
+    const s={char:state.char,msgs:state.msgs.slice(-30),log:state.log,combat:state.combat,enemies:state.enemies,opts:state.opts};
+    localStorage.setItem(SAVE_KEY,JSON.stringify(s));
+  }catch(e){console.warn("Save failed:",e);}
+}
+function loadGame(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw)return false;
+    const s=JSON.parse(raw);
+    if(!s.char||!s.char.name)return false;
+    state.char=s.char;state.msgs=s.msgs||[];state.log=s.log||[];
+    state.combat=s.combat||false;state.enemies=s.enemies||[];state.opts=s.opts||[];
+    state.screen="game";
+    return true;
+  }catch(e){return false;}
+}
+function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
+function hasSave(){
+  try{const r=localStorage.getItem(SAVE_KEY);if(!r)return false;const s=JSON.parse(r);return !!(s.char&&s.char.name);}catch(e){return false;}
+}
+
+// ══════════════════════════════════════
+// API
+// ══════════════════════════════════════
+async function askDM(sys,messages,onStatus){
+  onStatus("The Dungeon Master consults ancient tomes...");
+  try{
+    const res=await fetch("/api/dm",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({system:sys,messages})
+    });
+    onStatus("Reading the scrolls...");
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||"API error "+res.status);
+    return data;
+  }catch(err){
+    throw err;
+  }
+}
+
+// ══════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════
+function render(){
+  const app=$("app");
+  app.innerHTML="";
+  if(state.screen==="create") renderCreation(app);
+  else renderGame(app);
+}
+
+function renderCreation(app){
+  const s=state;
+  const bon=a=>s.race?(RACES[s.race].b[a]||0):0;
+  const fin=a=>(s.asgn[a]!==""?Number(s.asgn[a]):10)+bon(a);
+  const allSet=ABS.every(a=>s.asgn[a]!=="");
+  const ok=s.step===0?!!s.race:s.step===1?!!s.cls:s.step===2?allSet:s.charName.trim().length>0;
+
+  const wrap=h("div",{className:"create-wrap"});
+  const card=h("div",{className:"create-card"});
+
+  card.appendChild(h("div",{className:"create-title"},["⚔ Forge Thy Hero ⚔"]));
+  card.appendChild(h("div",{className:"create-sub"},[`Step ${s.step+1} of 4 — ${["Race","Class","Abilities","Review"][s.step]}`]));
+
+  // Progress
+  const prog=h("div",{className:"progress"});
+  for(let i=0;i<4;i++)prog.appendChild(h("div",{className:i<=s.step?"active":""}));
+  card.appendChild(prog);
+
+  // Randomize all
+  card.appendChild(h("button",{className:"btn-rand",onClick:()=>{
+    const rk=Object.keys(RACES),ck=Object.keys(CLASSES);
+    state.race=rk[Math.floor(Math.random()*rk.length)];
+    state.cls=ck[Math.floor(Math.random()*ck.length)];
+    const sh=shuffle([...ARR]);ABS.forEach((a,i)=>{state.asgn[a]=String(sh[i]);});
+    state.charName=NAMES[Math.floor(Math.random()*NAMES.length)];
+    state.step=3;render();
+  }},["🎲 Randomize Everything"]));
+
+  // Steps
+  if(s.step===0){
+    card.appendChild(h("div",{className:"section-title"},["Choose Thy Race"]));
+    const grid=h("div",{className:"opt-grid"});
+    for(const r of Object.keys(RACES)){
+      const btn=h("div",{className:"opt-btn"+(s.race===r?" sel":""),onClick:()=>{state.race=r;render();}});
+      btn.appendChild(h("div",{className:"opt-name"},[r]));
+      btn.appendChild(h("div",{className:"opt-sub"},[Object.entries(RACES[r].b).map(([a,v])=>"+"+v+" "+a.toUpperCase()).join(", ")]));
+      grid.appendChild(btn);
+    }
+    card.appendChild(grid);
+    if(s.race)card.appendChild(h("div",{className:"desc"},[RACES[s.race].desc]));
+  }
+
+  if(s.step===1){
+    card.appendChild(h("div",{className:"section-title"},["Choose Thy Calling"]));
+    const grid=h("div",{className:"opt-grid"});
+    for(const c of Object.keys(CLASSES)){
+      const btn=h("div",{className:"opt-btn"+(s.cls===c?" sel":""),onClick:()=>{state.cls=c;render();}});
+      btn.appendChild(h("div",{className:"opt-name"},[c]));
+      btn.appendChild(h("div",{className:"opt-sub"},["d"+CLASSES[c].hd+" Hit Die"]));
+      grid.appendChild(btn);
+    }
+    card.appendChild(grid);
+    if(s.cls)card.appendChild(h("div",{className:"desc"},["Features: "+CLASSES[s.cls].feat.join(" • ")]));
+  }
+
+  if(s.step===2){
+    card.appendChild(h("div",{className:"section-title"},["Assign Thy Abilities"]));
+    card.appendChild(h("div",{style:{color:"var(--dimr)",fontSize:"0.8rem",marginBottom:"0.5rem"}},["Standard Array: "+ARR.join(", ")]));
+    card.appendChild(h("button",{className:"btn-rand",onClick:()=>{
+      const sh=shuffle([...ARR]);ABS.forEach((a,i)=>{state.asgn[a]=String(sh[i]);});render();
+    }},["🎲 Randomize Stats"]));
+
+    for(const a of ABS){
+      const row=h("div",{className:"ab-row"});
+      row.appendChild(h("span",{className:"ab-name"},[ABF[a]]));
+      const sel=h("select",{className:"ab-sel",onChange:(e)=>{state.asgn[a]=e.target.value;render();}});
+      sel.appendChild(h("option",{value:""},["—"]));
+      // available values
+      const used=ABS.filter(x=>x!==a).map(x=>s.asgn[x]).filter(v=>v!=="").map(Number);
+      const pool=[...ARR];for(const v of used){const i=pool.indexOf(v);if(i!==-1)pool.splice(i,1);}
+      const avail=[...new Set(pool)].sort((a,b)=>b-a);
+      for(const v of avail){const o=h("option",{value:String(v)},[String(v)]);if(String(v)===s.asgn[a])o.selected=true;sel.appendChild(o);}
+      row.appendChild(sel);
+      if(s.asgn[a]!==""&&bon(a)>0)row.appendChild(h("span",{style:{color:"var(--grn)",fontSize:"0.76rem"}},
+        ["+"+bon(a)]));
+      if(s.asgn[a]!=="")row.appendChild(h("span",{style:{fontFamily:"var(--f1)",color:"var(--text)",fontWeight:"700",marginLeft:"auto"}},
+        [fin(a)+" ("+fm(fin(a))+")"]));
+      card.appendChild(row);
+    }
+  }
+
+  if(s.step===3){
+    card.appendChild(h("div",{className:"section-title"},["Name Thy Champion"]));
+    const inp=h("input",{className:"name-input",value:s.charName,maxLength:"30",placeholder:"Enter name...",
+      onInput:(e)=>{state.charName=e.target.value;}});
+    card.appendChild(inp);
+    const rg=h("div",{className:"review-grid"});
+    rg.innerHTML=`<div>Race: <span>${s.race}</span></div><div>Class: <span>${s.cls}</span></div>`;
+    card.appendChild(rg);
+    const sg=h("div",{className:"stat-grid"});
+    for(const a of ABS){
+      const box=h("div",{className:"stat-box"});
+      box.innerHTML=`<div class="lbl">${a.toUpperCase()}</div><div class="val">${fin(a)}</div><div class="mod">${fm(fin(a))}</div>`;
+      sg.appendChild(box);
+    }
+    card.appendChild(sg);
+  }
+
+  // Nav
+  const nav=h("div",{className:"nav-row"});
+  if(s.step>0)nav.appendChild(h("button",{className:"btn-sec",onClick:()=>{state.step--;render();}},["← Back"]));
+  else nav.appendChild(h("div"));
+  if(s.step<3){
+    nav.appendChild(h("button",{className:"btn-pri",disabled:!ok,onClick:()=>{if(ok){state.step++;render();}}},["Next →"]));
+  } else {
+    nav.appendChild(h("button",{className:"btn-pri",disabled:!ok,onClick:()=>{
+      if(!ok)return;
+      const c=CLASSES[s.cls],ab={};ABS.forEach(a=>{ab[a]=fin(a);});
+      const cm=mo(ab.con),dm=mo(ab.dex);
+      let ac=c.ac;if(s.cls==="Wizard")ac=10+dm;if(s.cls==="Rogue")ac=12+dm;if(s.cls==="Ranger")ac=12+Math.min(dm,2);
+      state.char={name:s.charName.trim(),race:s.race,class:s.cls,level:1,xp:0,hp:c.hp0+cm,maxHp:c.hp0+cm,ac,ab,prof:2,
+        spd:RACES[s.race].spd,feat:c.feat,sp:c.sp,cantrips:c.cantrips||[],spells:c.spells||[],
+        sMax:c.slots||0,sUsed:0,inv:[...c.eq],gold:10+Math.floor(Math.random()*100),cond:[]};
+      state.screen="game";render();startGame();
+    }},["⚔ Begin Quest ⚔"]));
+  }
+  card.appendChild(nav);
+  wrap.appendChild(card);
+  app.appendChild(wrap);
+
+  // Focus name input
+  if(s.step===3)setTimeout(()=>{const i=document.querySelector(".name-input");if(i)i.focus();},50);
+}
+
+async function startGame(){
+  await callDMAction("",true);
+}
+
+async function callDMAction(userMsg,isInit){
+  const ch=state.char,en=state.enemies,inC=state.combat;
+  state.loading=true;state.opts=[];render();
+
+  const sys=`You are a D&D 5e DM. Medieval tone. Max 2 short paragraphs. Be vivid but concise.
+PC:${ch.name} ${ch.race} ${ch.class} Lv${ch.level} HP:${ch.hp}/${ch.maxHp} AC:${ch.ac}
+STR${ch.ab.str} DEX${ch.ab.dex} CON${ch.ab.con} INT${ch.ab.int} WIS${ch.ab.wis} CHA${ch.ab.cha}
+Feats:${ch.feat.join(",")}
+${ch.sp?"Spells:"+ch.spells.join(",")+",Slots:"+(ch.sMax-ch.sUsed):""}
+Gear:${ch.inv.join(",")},Gold:${ch.gold}
+${en.length?"Foes:"+en.map(e=>e.name+" "+e.hp+"/"+e.maxHp+"hp AC"+e.ac).join("; "):""}
+${inC?"IN COMBAT":"EXPLORING"}
+Show dice:[d20:14+5=19 vs AC15 HIT]. Use 5e rules.
+Reply ONLY JSON:{"narrative":"story","log":[{"type":"combat","text":"x"}],"changes":{"hpChange":0,"goldChange":0,"addItems":[],"removeItems":[],"xp":0,"slotUsed":false,"combat":false,"enemies":[],"addConditions":[],"removeConditions":[]},"options":["A","B","C"]}`;
+
+  const apiMsgs=isInit
+    ?[{role:"user",content:"Begin a dramatic medieval D&D adventure opening scene!"}]
+    :[...state.msgs.slice(-8).map(m=>({role:m.role,content:m.text})),{role:"user",content:userMsg}];
+
+  try{
+    const parsed=await askDM(sys,apiMsgs,s=>{state.status=s;render();});
+    state.status="";
+    const sc=parsed.changes||{};
+    const ch2=state.char;
+    if(sc.hpChange)ch2.hp=Math.max(0,Math.min(ch2.maxHp,ch2.hp+sc.hpChange));
+    if(sc.goldChange)ch2.gold=Math.max(0,ch2.gold+sc.goldChange);
+    if(sc.addItems?.length)ch2.inv.push(...sc.addItems);
+    if(sc.removeItems?.length)ch2.inv=ch2.inv.filter(x=>!sc.removeItems.includes(x));
+    if(sc.xp)ch2.xp+=sc.xp;
+    if(sc.slotUsed&&ch2.sUsed<ch2.sMax)ch2.sUsed++;
+    if(sc.addConditions?.length)ch2.cond=[...new Set([...ch2.cond,...sc.addConditions])];
+    if(sc.removeConditions?.length)ch2.cond=ch2.cond.filter(x=>!sc.removeConditions.includes(x));
+    if(sc.combat!==undefined)state.combat=sc.combat;
+    if(sc.enemies)state.enemies=sc.enemies;
+    if(parsed.log?.length)state.log=state.log.concat(parsed.log).slice(-50);
+    if(!isInit)state.msgs.push({role:"user",text:userMsg});
+    state.msgs.push({role:"assistant",text:parsed.narrative||"The DM nods silently..."});
+    state.opts=parsed.options||["Look around","Move forward","Check inventory"];
+    saveGame();
+  }catch(err){
+    state.status="";
+    state.msgs.push({role:"assistant",text:"⚠ "+err.message});
+    state.opts=["Retry"];
+  }
+  state.loading=false;
+  render();
+  setTimeout(()=>{const n=document.querySelector(".narrative");if(n)n.scrollTop=n.scrollHeight;},60);
+}
+
+function renderGame(app){
+  const ch=state.char;
+  const hp=ch.maxHp>0?(ch.hp/ch.maxHp)*100:0;
+  const wrap=h("div",{className:"game-wrap"});
+
+  // Sidebar
+  const sb=h("div",{className:"sidebar"});
+  sb.appendChild(h("div",{className:"char-name"},[ch.name]));
+  sb.appendChild(h("div",{className:"char-sub"},[`${ch.race} ${ch.class} • Level ${ch.level}`]));
+
+  const hpRow=h("div",{className:"hp-row"});
+  hpRow.innerHTML=`<span style="color:var(--dimr)">Hit Points</span><span><span style="color:${hp>50?"var(--grn)":hp>25?"var(--gold)":"var(--red)"}">${ch.hp}</span><span style="color:var(--border)">/${ch.maxHp}</span></span>`;
+  sb.appendChild(hpRow);
+  const hpTrack=h("div",{className:"hp-track"});
+  hpTrack.appendChild(h("div",{className:"hp-fill",style:{width:hp+"%",background:hp>50?"var(--grn)":hp>25?"var(--gold)":"var(--red)"}}));
+  sb.appendChild(hpTrack);
+
+  const ms=h("div",{className:"mini-stats"});
+  for(const[l,v]of[["AC",ch.ac],["SPD",ch.spd],["PROF","+"+ch.prof]]){
+    const d=h("div",{className:"mini-stat"});
+    d.innerHTML=`<div class="lbl">${l}</div><div class="val">${v}</div>`;
+    ms.appendChild(d);
+  }
+  sb.appendChild(ms);
+
+  const ag=h("div",{className:"ab-grid"});
+  for(const a of ABS){
+    const d=h("div",{className:"ab-box"});
+    d.innerHTML=`<div class="lbl">${a.toUpperCase()}</div><div class="val">${ch.ab[a]}</div><div class="mod">${fm(ch.ab[a])}</div>`;
+    ag.appendChild(d);
+  }
+  sb.appendChild(ag);
+
+  if(ch.sp){
+    sb.appendChild(h("div",{className:"side-label"},["Spell Slots"]));
+    const sl=h("div",{className:"slots"});
+    for(let i=0;i<ch.sMax;i++)sl.appendChild(h("span",{className:"slot "+(i<(ch.sMax-ch.sUsed)?"full":"empty")},["◆"]));
+    sb.appendChild(sl);
+  }
+
+  sb.appendChild(h("div",{className:"divider"}));
+  sb.appendChild(h("div",{className:"side-label"},["Gold"]));
+  sb.appendChild(h("div",{className:"side-val"},[ch.gold+" gp"]));
+  sb.appendChild(h("div",{className:"side-label",style:{marginTop:"4px"}},["Experience"]));
+  sb.appendChild(h("div",{style:{color:"var(--dim)",fontSize:"0.78rem"}},[ch.xp+"/300"]));
+  sb.appendChild(h("div",{className:"divider"}));
+  sb.appendChild(h("div",{className:"side-label"},["Equipment"]));
+  for(const item of ch.inv)sb.appendChild(h("div",{className:"side-item"},["• "+item]));
+
+  if(state.log.length){
+    const logWrap=h("div",{style:{marginTop:"auto",paddingTop:"6px"}});
+    logWrap.appendChild(h("div",{className:"divider"}));
+    logWrap.appendChild(h("div",{className:"side-label"},["Chronicle"]));
+    for(const l of state.log.slice(-6)){
+      logWrap.appendChild(h("div",{className:"log-entry",style:{color:l.type==="combat"?"var(--red)":l.type==="heal"?"var(--grn)":"var(--dim)"}},[l.text]));
+    }
+    sb.appendChild(logWrap);
+  }
+  wrap.appendChild(sb);
+
+  // Main
+  const main=h("div",{className:"main-panel"});
+
+  if(state.combat){
+    const banner=h("div",{className:"combat-banner"});
+    let bhtml="⚔ COMBAT ⚔";
+    if(state.enemies.length)bhtml+=`<div class="combat-foes">${state.enemies.map(e=>e.name+": "+e.hp+"/"+e.maxHp+"hp AC"+e.ac).join(" • ")}</div>`;
+    banner.innerHTML=bhtml;
+    main.appendChild(banner);
+  }
+
+  const narr=h("div",{className:"narrative"});
+  if(!state.msgs.length&&!state.loading&&!state.status){
+    narr.appendChild(h("div",{style:{color:"var(--dimr)",textAlign:"center",marginTop:"3rem",fontFamily:"var(--f1)",fontSize:"1rem"}},["Thy quest awaits..."]));
+  }
+  for(const m of state.msgs){
+    if(m.role==="user"){
+      const d=h("div",{className:"user-msg"});
+      d.appendChild(h("div",{className:"user-tag"},["THY ACTION"]));
+      d.appendChild(h("div",{style:{whiteSpace:"pre-wrap"}},[m.text]));
+      narr.appendChild(d);
+    }else{
+      narr.appendChild(h("div",{className:"dm-msg",style:{whiteSpace:"pre-wrap"}},[m.text]));
+    }
+  }
+  if(state.loading||state.status){
+    narr.appendChild(h("div",{className:"status-msg"},[state.status||"The DM weaves fate..."]));
+  }
+  if(!state.loading&&state.opts.length){
+    const or=h("div",{className:"opts-row"});
+    for(const o of state.opts){
+      or.appendChild(h("button",{className:"opt-chip",onClick:()=>handleAction(o)},[o]));
+    }
+    narr.appendChild(or);
+  }
+  main.appendChild(narr);
+
+  // Input
+  const ia=h("div",{className:"input-area"});
+  const ta=h("textarea",{className:"text-input",rows:"2",placeholder:"Declare thy action...",disabled:state.loading,
+    onKeydown:(e)=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSubmit();}},
+    onInput:(e)=>{state.input=e.target.value;}});
+  ta.value=state.input;
+  ia.appendChild(ta);
+  ia.appendChild(h("button",{className:"send-btn",disabled:state.loading,onClick:handleSubmit},["⚔"]));
+  main.appendChild(ia);
+
+  wrap.appendChild(main);
+  app.appendChild(wrap);
+
+  // Scroll
+  setTimeout(()=>{const n=document.querySelector(".narrative");if(n)n.scrollTop=n.scrollHeight;},30);
+}
+
+function handleAction(text){
+  if(text==="Start Over"){clearSave();location.reload();return;}
+  if(text==="Retry"){state.msgs=state.msgs.filter(m=>!m.text.startsWith("⚠"));callDMAction("",true);return;}
+  state.input="";
+  callDMAction(text,false);
+}
+
+function handleSubmit(){
+  const t=state.input.trim();
+  if(t&&!state.loading){state.input="";callDMAction(t,false);}
+}
+
+// Start — check for saved game
+if(hasSave()){
+  state.screen="resume";
+  renderResume();
+} else {
+  render();
+}
+
+function renderResume(){
+  const app=$("app");
+  app.innerHTML="";
+  const wrap=h("div",{className:"create-wrap"});
+  const card=h("div",{className:"create-card",style:{textAlign:"center"}});
+  card.appendChild(h("div",{className:"create-title"},["⚔ D&D AI Dungeon Master ⚔"]));
+
+  // Peek at save to show character info
+  let info="";
+  try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));info=s.char.name+" — "+s.char.race+" "+s.char.class+" (Lv"+s.char.level+", "+s.char.hp+"/"+s.char.maxHp+" HP)";}catch(e){}
+  if(info) card.appendChild(h("div",{style:{fontFamily:"var(--f2)",color:"var(--dim)",fontSize:"0.92rem",margin:"1rem 0 0.3rem"}},[info]));
+
+  card.appendChild(h("div",{style:{fontFamily:"var(--f2)",color:"var(--dimr)",fontSize:"0.85rem",margin:"0.5rem 0 1.5rem"}},["A saved quest was found."]));
+
+  card.appendChild(h("button",{className:"btn-pri",style:{display:"block",width:"100%",padding:"0.7rem",fontSize:"0.95rem",marginBottom:"0.75rem"},onClick:()=>{
+    loadGame();render();
+  }},["⚔ Continue Quest"]));
+
+  card.appendChild(h("button",{className:"btn-sec",style:{display:"block",width:"100%",padding:"0.6rem",fontSize:"0.88rem"},onClick:()=>{
+    clearSave();state.screen="create";render();
+  }},["🗡 New Adventure"]));
+
+  wrap.appendChild(card);
+  app.appendChild(wrap);
+}
+</script>
+</body>
+</html>
