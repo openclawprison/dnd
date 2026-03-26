@@ -4,111 +4,108 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>D&D AI Dungeon Master</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f4ede0;--card:#faf6ed;--panel:#eee7d6;--border:#d4c9ac;--border2:#c4b894;
-  --gold:#8a6d2b;--gold2:#6b5520;--text:#3a3428;--dim:#7a7060;--dimr:#9a9080;
-  --red:#8a3030;--grn:#3a6a3a;--purp:#5a4a7a;--accent:#c9a84c;
-  --f1:'Cinzel',Georgia,serif;--f2:'EB Garamond',Georgia,serif;
+  --bg:#f5efe3;--card:#fffbf3;--panel:#ece5d5;--border:#cfc5a8;--border2:#b8ad90;
+  --gold:#7a5c1f;--gold-light:#a07a2a;--text:#2a2420;--text2:#3d352a;--dim:#5e5548;--dimr:#7a7268;
+  --red:#8a2020;--grn:#2a6a2a;--purp:#5a3a8a;--accent:#b8922e;
+  --f1:'Cinzel',Georgia,serif;--f2:'Lora',Georgia,serif;
 }
-body{font-family:var(--f2);background:var(--bg);color:var(--text);height:100vh;overflow:hidden}
-::-webkit-scrollbar{width:6px}
+body{font-family:var(--f2);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;font-size:16px}
+::-webkit-scrollbar{width:7px}
 ::-webkit-scrollbar-track{background:var(--panel)}
-::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--dim)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-select{font-family:var(--f2)}
-button{font-family:var(--f1);transition:all 0.15s}
-button:hover{filter:brightness(1.1)}
-
-/* App */
+select{font-family:var(--f2);font-size:1rem;color:var(--text)}
+button{font-family:var(--f1);transition:all 0.15s;cursor:pointer}
+button:hover:not(:disabled){filter:brightness(1.08)}
+button:disabled{opacity:0.45;cursor:default}
+input{font-family:var(--f1)}
 #app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-/* Creation */
-.create-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto;
-  background:linear-gradient(180deg,#f8f2e4 0%,#efe6d2 100%)}
-.create-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2rem;max-width:600px;width:100%;
-  box-shadow:0 2px 20px rgba(0,0,0,0.06)}
-.create-title{font-family:var(--f1);font-size:1.6rem;color:var(--gold);text-align:center;letter-spacing:0.1em}
-.create-sub{font-family:var(--f2);text-align:center;color:var(--dim);font-size:0.9rem;margin:0.3rem 0 1rem}
-.progress{display:flex;gap:4px;margin-bottom:1.3rem}
-.progress div{flex:1;height:3px;border-radius:2px;background:var(--border);transition:all 0.3s}
-.progress div.active{background:var(--gold)}
-.section-title{font-family:var(--f1);color:var(--gold);font-weight:600;margin-bottom:0.5rem;font-size:1rem}
-.opt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:0.5rem}
-.opt-btn{background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:0.6rem;cursor:pointer;text-align:center;transition:all 0.15s}
-.opt-btn:hover{border-color:var(--gold);background:#faf5e8}
-.opt-btn.sel{border-color:var(--gold);background:#f5ecd5;box-shadow:0 0 0 1px var(--gold)}
-.opt-name{font-family:var(--f1);color:var(--gold);font-size:0.88rem}
-.opt-sub{font-family:var(--f2);color:var(--dim);font-size:0.72rem;margin-top:2px}
-.desc{font-family:var(--f2);color:var(--text);font-size:0.88rem;font-style:italic;margin-top:0.5rem}
-.ab-row{display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0.6rem;background:var(--panel);border-radius:6px;margin-bottom:4px;border:1px solid var(--border)}
-.ab-name{font-family:var(--f1);color:var(--gold);width:95px;font-size:0.84rem}
-.ab-sel{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:0.25rem 0.4rem;font-size:0.88rem}
-.name-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.7rem;color:var(--gold);font-size:1.1rem;font-family:var(--f1);text-align:center;outline:none;letter-spacing:0.05em;margin-bottom:0.7rem}
-.name-input:focus{border-color:var(--gold)}
-.nav-row{display:flex;justify-content:space-between;margin-top:1.5rem}
-.btn-pri{background:linear-gradient(135deg,var(--accent),var(--gold));color:#fff;border:none;border-radius:6px;padding:0.5rem 1.4rem;cursor:pointer;font-weight:700;font-size:0.84rem;letter-spacing:0.04em}
-.btn-pri:disabled{background:#ccc;cursor:default}
-.btn-sec{background:transparent;color:var(--dim);border:1px solid var(--border);border-radius:6px;padding:0.45rem 1rem;cursor:pointer;font-size:0.82rem}
-.btn-rand{background:transparent;border:1px dashed var(--border2);border-radius:6px;padding:0.35rem 1rem;color:var(--gold);font-family:var(--f1);font-size:0.78rem;cursor:pointer;display:block;margin:0 auto 1rem}
-.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-.stat-box{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:0.3rem;text-align:center}
-.stat-box .lbl{font-family:var(--f2);font-size:0.48rem;letter-spacing:0.1em;color:var(--dimr);text-transform:uppercase}
-.stat-box .val{font-family:var(--f1);font-size:1rem;color:var(--gold);font-weight:700}
-.stat-box .mod{font-family:var(--f2);font-size:0.68rem;color:var(--dim)}
-.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;font-size:0.88rem;color:var(--dim);margin-bottom:0.5rem}
-.review-grid span{color:var(--gold)}
-.divider{height:1px;background:var(--border);margin:0.5rem 0}
+/* ── Creation ── */
+.cw{flex:1;display:flex;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto;background:linear-gradient(180deg,#f8f2e6 0%,#efe5d0 100%)}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:2.2rem;max-width:620px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,0.07)}
+.ct{font-family:var(--f1);font-size:1.7rem;color:var(--gold);text-align:center;letter-spacing:0.08em;margin-bottom:0.3rem}
+.cs{text-align:center;color:var(--dim);font-size:1rem;margin-bottom:1.2rem}
+.prog{display:flex;gap:5px;margin-bottom:1.5rem}
+.prog div{flex:1;height:4px;border-radius:3px;background:var(--border)}
+.prog div.on{background:var(--gold)}
+.st{font-family:var(--f1);color:var(--gold);font-weight:600;margin-bottom:0.6rem;font-size:1.1rem}
+.og{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:0.6rem;margin-bottom:0.8rem}
+.ob{background:var(--card);border:2px solid var(--border);border-radius:10px;padding:0.7rem;cursor:pointer;text-align:center;transition:all 0.15s}
+.ob:hover{border-color:var(--gold-light);background:#fdf7ea}
+.ob.sel{border-color:var(--gold);background:#f7eed8;box-shadow:0 0 0 1px var(--gold)}
+.on_t{font-family:var(--f1);color:var(--gold);font-size:0.95rem;font-weight:600}
+.os{color:var(--dim);font-size:0.82rem;margin-top:3px}
+.dsc{color:var(--text2);font-size:1rem;font-style:italic;margin-top:0.6rem;line-height:1.5}
+.ar{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.7rem;background:var(--panel);border-radius:8px;margin-bottom:5px;border:1px solid var(--border)}
+.an{font-family:var(--f1);color:var(--gold);width:100px;font-size:0.95rem;font-weight:600}
+.as{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:5px;padding:0.35rem 0.5rem;font-size:1rem}
+.ni{width:100%;background:var(--card);border:2px solid var(--border);border-radius:8px;padding:0.8rem;color:var(--gold);font-size:1.2rem;text-align:center;outline:none;letter-spacing:0.05em;margin-bottom:0.8rem}
+.ni:focus{border-color:var(--gold)}
+.nr{display:flex;justify-content:space-between;margin-top:1.8rem}
+.bp{background:linear-gradient(135deg,var(--accent),var(--gold));color:#fff;border:none;border-radius:8px;padding:0.6rem 1.6rem;font-weight:700;font-size:0.95rem;letter-spacing:0.04em}
+.bs{background:transparent;color:var(--dim);border:1px solid var(--border);border-radius:8px;padding:0.55rem 1.2rem;font-size:0.92rem}
+.br{background:transparent;border:1px dashed var(--border2);border-radius:8px;padding:0.4rem 1.2rem;color:var(--gold);font-size:0.88rem;display:block;margin:0 auto 1.2rem}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:0.8rem}
+.sb{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:0.4rem;text-align:center}
+.sb .l{font-size:0.7rem;letter-spacing:0.08em;color:var(--dim);text-transform:uppercase}
+.sb .v{font-family:var(--f1);font-size:1.15rem;color:var(--gold);font-weight:700}
+.sb .m{font-size:0.82rem;color:var(--text2)}
+.rg{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;font-size:1rem;color:var(--dim);margin-bottom:0.6rem}
+.rg span{color:var(--gold);font-weight:600}
 
-/* Game */
-.game-wrap{flex:1;display:flex;overflow:hidden}
-.sidebar{width:250px;min-width:250px;background:var(--panel);border-right:1px solid var(--border);padding:0.8rem;overflow-y:auto;display:flex;flex-direction:column}
-.char-name{font-family:var(--f1);font-size:1.1rem;color:var(--gold)}
-.char-sub{font-family:var(--f2);font-size:0.74rem;color:var(--dimr);margin-bottom:0.6rem}
-.hp-row{display:flex;justify-content:space-between;font-size:0.74rem;margin-bottom:2px}
-.hp-track{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin-bottom:8px}
-.hp-fill{height:100%;border-radius:3px;transition:width 0.5s}
-.mini-stats{display:flex;gap:4px;margin-bottom:8px}
-.mini-stat{flex:1;background:var(--card);border:1px solid var(--border);border-radius:5px;padding:0.2rem;text-align:center}
-.mini-stat .lbl{font-size:0.45rem;letter-spacing:0.08em;color:var(--dimr)}
-.mini-stat .val{font-family:var(--f1);font-size:0.9rem;color:var(--gold);font-weight:700}
-.ab-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;margin-bottom:8px}
-.ab-box{background:var(--card);border:1px solid var(--border);border-radius:5px;padding:0.2rem;text-align:center}
-.ab-box .lbl{font-size:0.44rem;letter-spacing:0.06em;color:var(--dimr)}
-.ab-box .val{font-family:var(--f1);font-size:0.88rem;color:var(--gold);font-weight:700}
-.ab-box .mod{font-size:0.62rem;color:var(--dim)}
-.side-label{font-size:0.5rem;letter-spacing:0.1em;color:var(--dimr);margin-bottom:2px}
-.side-val{font-family:var(--f1);color:var(--gold);font-size:0.88rem}
-.side-item{font-size:0.74rem;color:var(--dim)}
-.log-entry{font-size:0.7rem;padding:1px 0}
+/* ── Game ── */
+.gw{flex:1;display:flex;overflow:hidden}
+.sd{width:260px;min-width:260px;background:var(--panel);border-right:1px solid var(--border);padding:0.9rem;overflow-y:auto;display:flex;flex-direction:column}
+.cn{font-family:var(--f1);font-size:1.2rem;color:var(--gold);font-weight:700}
+.cx{font-size:0.85rem;color:var(--dim);margin-bottom:0.7rem}
+.hr{display:flex;justify-content:space-between;font-size:0.85rem;margin-bottom:3px;color:var(--text2)}
+.ht{height:7px;border-radius:4px;background:var(--border);overflow:hidden;margin-bottom:10px}
+.hf{height:100%;border-radius:4px;transition:width 0.5s}
+.ms{display:flex;gap:5px;margin-bottom:10px}
+.mi{flex:1;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.3rem;text-align:center}
+.mi .l{font-size:0.65rem;letter-spacing:0.06em;color:var(--dim)}
+.mi .v{font-family:var(--f1);font-size:1.05rem;color:var(--gold);font-weight:700}
+.ag{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:10px}
+.ax{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.25rem;text-align:center}
+.ax .l{font-size:0.6rem;letter-spacing:0.05em;color:var(--dim)}
+.ax .v{font-family:var(--f1);font-size:1rem;color:var(--gold);font-weight:700}
+.ax .m{font-size:0.78rem;color:var(--text2)}
+.sl{font-size:0.75rem;letter-spacing:0.08em;color:var(--dim);margin-bottom:3px;text-transform:uppercase;font-weight:600}
+.sv{font-family:var(--f1);color:var(--gold);font-size:1rem}
+.si{font-size:0.88rem;color:var(--text2);padding:1px 0}
+.le{font-size:0.82rem;padding:2px 0}
+.dv{height:1px;background:var(--border);margin:8px 0}
+.slt{display:flex;gap:4px;margin-bottom:6px}
+.slt span{font-size:1.15rem}
+.slt .on{color:var(--gold)}
+.slt .off{color:var(--border)}
 
-.main-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
-.combat-banner{margin:0.6rem 1.2rem 0;background:linear-gradient(90deg,#f5e0e0,#faeaea,#f5e0e0);border:1px solid #d4a0a0;border-radius:6px;padding:0.4rem 0.8rem;text-align:center;font-family:var(--f1);color:var(--red);font-weight:700;font-size:0.82rem;letter-spacing:0.08em}
-.combat-foes{font-family:var(--f2);font-size:0.72rem;color:#8a5252;font-weight:400;margin-top:2px}
-.narrative{flex:1;overflow-y:auto;padding:1.3rem 1.8rem;line-height:1.75;font-size:1rem}
-.dm-msg{margin-bottom:1rem;animation:fadeUp 0.3s ease}
-.user-msg{background:rgba(90,74,122,0.06);border-radius:8px;padding:0.5rem 0.9rem;margin-bottom:1rem;border-left:3px solid var(--purp);animation:fadeUp 0.3s ease}
-.user-tag{font-family:var(--f1);color:var(--purp);font-size:0.6rem;letter-spacing:0.1em;margin-bottom:3px;font-weight:700}
-.status-msg{padding:0.8rem 0;font-family:var(--f1);font-size:0.88rem;color:var(--gold);animation:pulse 1.5s infinite}
-.opts-row{display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem}
-.opt-chip{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:0.4rem 0.9rem;cursor:pointer;font-family:var(--f1);color:var(--gold);font-size:0.82rem}
-.opt-chip:hover{background:#f0e8d2;border-color:var(--gold)}
-.input-area{border-top:1px solid var(--border);padding:0.6rem 1.3rem;background:var(--panel);display:flex;gap:0.5rem}
-.text-input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:0.55rem 0.75rem;font-family:var(--f2);color:var(--text);font-size:0.92rem;outline:none;resize:none}
-.text-input:focus{border-color:var(--gold)}
-.send-btn{background:linear-gradient(135deg,var(--accent),var(--gold));color:#fff;border:none;border-radius:6px;padding:0.4rem 1rem;cursor:pointer;font-family:var(--f1);font-weight:700;font-size:0.88rem;align-self:flex-end}
-.send-btn:disabled{background:#ccc;cursor:default}
-.slots{display:flex;gap:3px;margin-top:2px}
-.slot{font-size:1rem}
-.slot.full{color:var(--gold)}
-.slot.empty{color:var(--border)}
+.mp{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.cb{margin:0.7rem 1.4rem 0;background:linear-gradient(90deg,#f8e2e2,#fcecec,#f8e2e2);border:1px solid #d4a0a0;border-radius:8px;padding:0.5rem 1rem;text-align:center;font-family:var(--f1);color:var(--red);font-weight:700;font-size:0.95rem;letter-spacing:0.06em}
+.cf{font-family:var(--f2);font-size:0.85rem;color:#7a4444;font-weight:400;margin-top:3px}
+.nar{flex:1;overflow-y:auto;padding:1.4rem 2rem;line-height:1.8;font-size:1.05rem;color:var(--text)}
+.dm{margin-bottom:1.1rem;animation:fadeUp 0.3s ease}
+.um{background:rgba(90,58,138,0.06);border-radius:10px;padding:0.6rem 1rem;margin-bottom:1.1rem;border-left:4px solid var(--purp);animation:fadeUp 0.3s ease}
+.ut{font-family:var(--f1);color:var(--purp);font-size:0.72rem;letter-spacing:0.08em;margin-bottom:4px;font-weight:700}
+.stm{padding:1rem 0;font-family:var(--f1);font-size:1rem;color:var(--gold-light);animation:pulse 1.5s infinite}
+.opr{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.8rem}
+.oc{background:var(--card);border:2px solid var(--border);border-radius:8px;padding:0.45rem 1rem;cursor:pointer;font-family:var(--f1);color:var(--gold);font-size:0.92rem;font-weight:600}
+.oc:hover{background:#f5edd5;border-color:var(--gold)}
+.ia{border-top:1px solid var(--border);padding:0.7rem 1.4rem;background:var(--panel);display:flex;gap:0.6rem}
+.ti{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.8rem;font-family:var(--f2);color:var(--text);font-size:1rem;outline:none;resize:none}
+.ti:focus{border-color:var(--gold)}
+.se{background:linear-gradient(135deg,var(--accent),var(--gold));color:#fff;border:none;border-radius:8px;padding:0.5rem 1.1rem;font-weight:700;font-size:1rem;align-self:flex-end}
 
 @media(max-width:700px){
-  .sidebar{width:200px;min-width:200px;padding:0.5rem;font-size:0.85rem}
-  .narrative{padding:1rem}
+  .sd{width:200px;min-width:200px;padding:0.6rem}
+  .nar{padding:1rem 1.2rem}
 }
 </style>
 </head>
@@ -120,12 +117,12 @@ button:hover{filter:brightness(1.1)}
 // ══════════════════════════════════════
 const RACES={
   Human:{b:{str:1,dex:1,con:1,int:1,wis:1,cha:1},desc:"Versatile and ambitious, humans adapt to any calling.",spd:30},
-  Elf:{b:{dex:2},desc:"Graceful and long-lived, with keen senses.",spd:30},
+  Elf:{b:{dex:2},desc:"Graceful and long-lived, with keen senses and a love of nature.",spd:30},
   Dwarf:{b:{con:2},desc:"Stout and sturdy, masters of stone and steel.",spd:25},
-  Halfling:{b:{dex:2},desc:"Small but brave, with uncanny luck.",spd:25},
-  "Half-Orc":{b:{str:2,con:1},desc:"Fierce and enduring, carrying orcish blood.",spd:30},
-  Tiefling:{b:{cha:2,int:1},desc:"Infernal heritage grants cunning charm.",spd:30},
-  Dragonborn:{b:{str:2,cha:1},desc:"Draconic warriors with proud lineage.",spd:30},
+  Halfling:{b:{dex:2},desc:"Small but brave, with uncanny luck and nimble reflexes.",spd:25},
+  "Half-Orc":{b:{str:2,con:1},desc:"Fierce and enduring, carrying the strength of orcish blood.",spd:30},
+  Tiefling:{b:{cha:2,int:1},desc:"Infernal heritage grants cunning charm and dark resilience.",spd:30},
+  Dragonborn:{b:{str:2,cha:1},desc:"Draconic warriors with a breath weapon and proud lineage.",spd:30},
 };
 const CLASSES={
   Fighter:{hd:10,hp0:10,ac:17,sp:false,feat:["Second Wind","Defense +1 AC"],eq:["Longsword","Shield","Chain Mail","Light Crossbow","20 Bolts"]},
@@ -143,218 +140,299 @@ const fm=s=>{const m=mo(s);return m>=0?"+"+m:""+m;};
 const shuffle=a=>{const c=[...a];for(let i=c.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[c[i],c[j]]=[c[j],c[i]];}return c;};
 const NAMES=["Aldric","Vexia","Thorn","Mirael","Kragmar","Lysara","Durnok","Faelith","Grimbold","Seraphine","Azrak","Elowen","Mordecai","Nyxara","Theron","Valdris","Isadora","Brom"];
 
+// ── DOM helpers ──
 const $=id=>document.getElementById(id);
-const h=(tag,attrs={},children=[])=>{
-  const el=document.createElement(tag);
-  for(const[k,v]of Object.entries(attrs)){
-    if(k==="className")el.className=v;
-    else if(k.startsWith("on"))el.addEventListener(k.slice(2).toLowerCase(),v);
-    else if(k==="style"&&typeof v==="object")Object.assign(el.style,v);
-    else el.setAttribute(k,v);
+
+function el(tag, cls, children) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (children) {
+    if (!Array.isArray(children)) children = [children];
+    for (const c of children) {
+      if (typeof c === "string") e.appendChild(document.createTextNode(c));
+      else if (c) e.appendChild(c);
+    }
   }
-  for(const c of(Array.isArray(children)?children:[children])){
-    if(typeof c==="string")el.appendChild(document.createTextNode(c));
-    else if(c)el.appendChild(c);
-  }
-  return el;
-};
+  return e;
+}
+
+function btn(text, cls, onclick) {
+  const b = document.createElement("button");
+  b.className = cls;
+  b.textContent = text;
+  b.addEventListener("click", onclick);
+  return b;
+}
 
 // ══════════════════════════════════════
 // STATE
 // ══════════════════════════════════════
-let state={
-  screen:"create",step:0,race:"",cls:"",asgn:{str:"",dex:"",con:"",int:"",wis:"",cha:""},charName:"",
-  char:null,msgs:[],log:[],input:"",loading:false,opts:[],combat:false,enemies:[],status:""
+let S = {
+  screen:"create", step:0, race:"", cls:"", asgn:{str:"",dex:"",con:"",int:"",wis:"",cha:""}, charName:"",
+  char:null, msgs:[], log:[], input:"", loading:false, opts:[], combat:false, enemies:[], status:""
 };
 
 // ══════════════════════════════════════
 // SAVE / LOAD
 // ══════════════════════════════════════
-const SAVE_KEY="dnd_ai_dm_save";
-function saveGame(){
-  try{
-    const s={char:state.char,msgs:state.msgs.slice(-30),log:state.log,combat:state.combat,enemies:state.enemies,opts:state.opts};
-    localStorage.setItem(SAVE_KEY,JSON.stringify(s));
-  }catch(e){console.warn("Save failed:",e);}
+const SAVE_KEY = "dnd_ai_dm_save";
+function saveGame() {
+  try {
+    const d = {char:S.char, msgs:S.msgs.slice(-30), log:S.log, combat:S.combat, enemies:S.enemies, opts:S.opts};
+    localStorage.setItem(SAVE_KEY, JSON.stringify(d));
+  } catch(e) { console.warn("Save failed:", e); }
 }
-function loadGame(){
-  try{
-    const raw=localStorage.getItem(SAVE_KEY);
-    if(!raw)return false;
-    const s=JSON.parse(raw);
-    if(!s.char||!s.char.name)return false;
-    state.char=s.char;state.msgs=s.msgs||[];state.log=s.log||[];
-    state.combat=s.combat||false;state.enemies=s.enemies||[];state.opts=s.opts||[];
-    state.screen="game";
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!d.char || !d.char.name) return false;
+    S.char=d.char; S.msgs=d.msgs||[]; S.log=d.log||[];
+    S.combat=d.combat||false; S.enemies=d.enemies||[]; S.opts=d.opts||[];
+    S.screen="game";
     return true;
-  }catch(e){return false;}
+  } catch(e) { return false; }
 }
-function clearSave(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
-function hasSave(){
-  try{const r=localStorage.getItem(SAVE_KEY);if(!r)return false;const s=JSON.parse(r);return !!(s.char&&s.char.name);}catch(e){return false;}
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch(e) {} }
+function hasSave() {
+  try { const r=localStorage.getItem(SAVE_KEY); if(!r)return false; const d=JSON.parse(r); return !!(d.char&&d.char.name); }
+  catch(e) { return false; }
 }
 
 // ══════════════════════════════════════
 // API
 // ══════════════════════════════════════
-async function askDM(sys,messages,onStatus){
+async function askDM(sys, messages, onStatus) {
   onStatus("The Dungeon Master consults ancient tomes...");
-  try{
-    const res=await fetch("/api/dm",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({system:sys,messages})
-    });
-    onStatus("Reading the scrolls...");
-    const data=await res.json();
-    if(!res.ok)throw new Error(data.error||"API error "+res.status);
-    return data;
-  }catch(err){
-    throw err;
-  }
+  const res = await fetch("/api/dm", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({system: sys, messages: messages})
+  });
+  onStatus("Reading the scrolls...");
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "API error " + res.status);
+  return data;
+}
+
+// ══════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════
+function bon(a) { return S.race ? (RACES[S.race].b[a]||0) : 0; }
+function fin(a) { return (S.asgn[a]!=="" ? Number(S.asgn[a]) : 10) + bon(a); }
+function avail(ab) {
+  const used = ABS.filter(a=>a!==ab).map(a=>S.asgn[a]).filter(v=>v!=="").map(Number);
+  const pool = [...ARR];
+  for (const v of used) { const i=pool.indexOf(v); if(i!==-1) pool.splice(i,1); }
+  return [...new Set(pool)].sort((a,b)=>b-a);
 }
 
 // ══════════════════════════════════════
 // RENDER
 // ══════════════════════════════════════
-function render(){
-  const app=$("app");
-  app.innerHTML="";
-  if(state.screen==="create") renderCreation(app);
+function render() {
+  const app = $("app");
+  app.innerHTML = "";
+  if (S.screen === "resume") renderResume(app);
+  else if (S.screen === "create") renderCreation(app);
   else renderGame(app);
 }
 
-function renderCreation(app){
-  const s=state;
-  const bon=a=>s.race?(RACES[s.race].b[a]||0):0;
-  const fin=a=>(s.asgn[a]!==""?Number(s.asgn[a]):10)+bon(a);
-  const allSet=ABS.every(a=>s.asgn[a]!=="");
-  const ok=s.step===0?!!s.race:s.step===1?!!s.cls:s.step===2?allSet:s.charName.trim().length>0;
+// ── Resume Screen ──
+function renderResume(app) {
+  const wrap = el("div","cw");
+  const card = el("div","cc");
+  card.style.textAlign = "center";
+  card.appendChild(el("div","ct",["⚔ D&D AI Dungeon Master ⚔"]));
 
-  const wrap=h("div",{className:"create-wrap"});
-  const card=h("div",{className:"create-card"});
+  let info = "";
+  try { const d=JSON.parse(localStorage.getItem(SAVE_KEY)); info=d.char.name+" — "+d.char.race+" "+d.char.class+" (Level "+d.char.level+", HP "+d.char.hp+"/"+d.char.maxHp+")"; } catch(e){}
+  if (info) {
+    const p = el("div","",[ info ]);
+    p.style.cssText = "color:var(--text2);font-size:1.05rem;margin:1.2rem 0 0.4rem";
+    card.appendChild(p);
+  }
 
-  card.appendChild(h("div",{className:"create-title"},["⚔ Forge Thy Hero ⚔"]));
-  card.appendChild(h("div",{className:"create-sub"},[`Step ${s.step+1} of 4 — ${["Race","Class","Abilities","Review"][s.step]}`]));
+  const sub = el("div","",["A saved quest was found."]);
+  sub.style.cssText = "color:var(--dim);font-size:1rem;margin:0.5rem 0 1.8rem";
+  card.appendChild(sub);
 
-  // Progress
-  const prog=h("div",{className:"progress"});
-  for(let i=0;i<4;i++)prog.appendChild(h("div",{className:i<=s.step?"active":""}));
+  const b1 = btn("⚔ Continue Quest", "bp", () => { loadGame(); render(); });
+  b1.style.cssText = "display:block;width:100%;padding:0.8rem;font-size:1.05rem;margin-bottom:0.8rem";
+  card.appendChild(b1);
+
+  const b2 = btn("🗡 New Adventure", "bs", () => { clearSave(); S.screen="create"; render(); });
+  b2.style.cssText = "display:block;width:100%;padding:0.7rem;font-size:1rem";
+  card.appendChild(b2);
+
+  wrap.appendChild(card);
+  app.appendChild(wrap);
+}
+
+// ── Creation Screen ──
+function renderCreation(app) {
+  const allSet = ABS.every(a => S.asgn[a] !== "");
+  const ok = S.step===0?!!S.race : S.step===1?!!S.cls : S.step===2?allSet : S.charName.trim().length>0;
+
+  const wrap = el("div","cw");
+  const card = el("div","cc");
+
+  card.appendChild(el("div","ct",["⚔ Forge Thy Hero ⚔"]));
+  card.appendChild(el("div","cs",["Step "+(S.step+1)+" of 4 — "+["Race","Class","Abilities","Review"][S.step]]));
+
+  // Progress bar
+  const prog = el("div","prog");
+  for (let i=0;i<4;i++) { const d=document.createElement("div"); if(i<=S.step) d.className="on"; prog.appendChild(d); }
   card.appendChild(prog);
 
   // Randomize all
-  card.appendChild(h("button",{className:"btn-rand",onClick:()=>{
+  card.appendChild(btn("🎲 Randomize Everything", "br", () => {
     const rk=Object.keys(RACES),ck=Object.keys(CLASSES);
-    state.race=rk[Math.floor(Math.random()*rk.length)];
-    state.cls=ck[Math.floor(Math.random()*ck.length)];
-    const sh=shuffle([...ARR]);ABS.forEach((a,i)=>{state.asgn[a]=String(sh[i]);});
-    state.charName=NAMES[Math.floor(Math.random()*NAMES.length)];
-    state.step=3;render();
-  }},["🎲 Randomize Everything"]));
+    S.race=rk[Math.floor(Math.random()*rk.length)];
+    S.cls=ck[Math.floor(Math.random()*ck.length)];
+    const sh=shuffle([...ARR]); ABS.forEach((a,i)=>{S.asgn[a]=String(sh[i]);});
+    S.charName=NAMES[Math.floor(Math.random()*NAMES.length)];
+    S.step=3; render();
+  }));
 
-  // Steps
-  if(s.step===0){
-    card.appendChild(h("div",{className:"section-title"},["Choose Thy Race"]));
-    const grid=h("div",{className:"opt-grid"});
-    for(const r of Object.keys(RACES)){
-      const btn=h("div",{className:"opt-btn"+(s.race===r?" sel":""),onClick:()=>{state.race=r;render();}});
-      btn.appendChild(h("div",{className:"opt-name"},[r]));
-      btn.appendChild(h("div",{className:"opt-sub"},[Object.entries(RACES[r].b).map(([a,v])=>"+"+v+" "+a.toUpperCase()).join(", ")]));
-      grid.appendChild(btn);
+  // ── Step 0: Race ──
+  if (S.step===0) {
+    card.appendChild(el("div","st",["Choose Thy Race"]));
+    const grid = el("div","og");
+    for (const r of Object.keys(RACES)) {
+      const b = el("div","ob"+(S.race===r?" sel":""));
+      b.appendChild(el("div","on_t",[r]));
+      b.appendChild(el("div","os",[Object.entries(RACES[r].b).map(([a,v])=>"+"+v+" "+a.toUpperCase()).join(", ")]));
+      b.addEventListener("click",()=>{ S.race=r; render(); });
+      grid.appendChild(b);
     }
     card.appendChild(grid);
-    if(s.race)card.appendChild(h("div",{className:"desc"},[RACES[s.race].desc]));
+    if (S.race) card.appendChild(el("div","dsc",[RACES[S.race].desc]));
   }
 
-  if(s.step===1){
-    card.appendChild(h("div",{className:"section-title"},["Choose Thy Calling"]));
-    const grid=h("div",{className:"opt-grid"});
-    for(const c of Object.keys(CLASSES)){
-      const btn=h("div",{className:"opt-btn"+(s.cls===c?" sel":""),onClick:()=>{state.cls=c;render();}});
-      btn.appendChild(h("div",{className:"opt-name"},[c]));
-      btn.appendChild(h("div",{className:"opt-sub"},["d"+CLASSES[c].hd+" Hit Die"]));
-      grid.appendChild(btn);
+  // ── Step 1: Class ──
+  if (S.step===1) {
+    card.appendChild(el("div","st",["Choose Thy Calling"]));
+    const grid = el("div","og");
+    for (const c of Object.keys(CLASSES)) {
+      const b = el("div","ob"+(S.cls===c?" sel":""));
+      b.appendChild(el("div","on_t",[c]));
+      b.appendChild(el("div","os",["d"+CLASSES[c].hd+" Hit Die"]));
+      b.addEventListener("click",()=>{ S.cls=c; render(); });
+      grid.appendChild(b);
     }
     card.appendChild(grid);
-    if(s.cls)card.appendChild(h("div",{className:"desc"},["Features: "+CLASSES[s.cls].feat.join(" • ")]));
+    if (S.cls) card.appendChild(el("div","dsc",["Features: "+CLASSES[S.cls].feat.join(" • ")]));
   }
 
-  if(s.step===2){
-    card.appendChild(h("div",{className:"section-title"},["Assign Thy Abilities"]));
-    card.appendChild(h("div",{style:{color:"var(--dimr)",fontSize:"0.8rem",marginBottom:"0.5rem"}},["Standard Array: "+ARR.join(", ")]));
-    card.appendChild(h("button",{className:"btn-rand",onClick:()=>{
-      const sh=shuffle([...ARR]);ABS.forEach((a,i)=>{state.asgn[a]=String(sh[i]);});render();
-    }},["🎲 Randomize Stats"]));
+  // ── Step 2: Abilities ──
+  if (S.step===2) {
+    card.appendChild(el("div","st",["Assign Thy Abilities"]));
+    const sub = el("div","",["Standard Array: "+ARR.join(", ")]);
+    sub.style.cssText = "color:var(--dim);font-size:0.95rem;margin-bottom:0.6rem";
+    card.appendChild(sub);
+    card.appendChild(btn("🎲 Randomize Stats","br",()=>{
+      const sh=shuffle([...ARR]); ABS.forEach((a,i)=>{S.asgn[a]=String(sh[i]);}); render();
+    }));
 
-    for(const a of ABS){
-      const row=h("div",{className:"ab-row"});
-      row.appendChild(h("span",{className:"ab-name"},[ABF[a]]));
-      const sel=h("select",{className:"ab-sel",onChange:(e)=>{state.asgn[a]=e.target.value;render();}});
-      sel.appendChild(h("option",{value:""},["—"]));
-      // available values
-      const used=ABS.filter(x=>x!==a).map(x=>s.asgn[x]).filter(v=>v!=="").map(Number);
-      const pool=[...ARR];for(const v of used){const i=pool.indexOf(v);if(i!==-1)pool.splice(i,1);}
-      const avail=[...new Set(pool)].sort((a,b)=>b-a);
-      for(const v of avail){const o=h("option",{value:String(v)},[String(v)]);if(String(v)===s.asgn[a])o.selected=true;sel.appendChild(o);}
+    for (const a of ABS) {
+      const row = el("div","ar");
+      row.appendChild(el("span","an",[ABF[a]]));
+
+      const sel = document.createElement("select");
+      sel.className = "as";
+      sel.innerHTML = '<option value="">—</option>';
+      for (const v of avail(a)) {
+        const opt = document.createElement("option");
+        opt.value = String(v); opt.textContent = String(v);
+        if (String(v) === S.asgn[a]) opt.selected = true;
+        sel.appendChild(opt);
+      }
+      sel.addEventListener("change", (function(ability){ return function(e){ S.asgn[ability]=e.target.value; render(); }; })(a));
       row.appendChild(sel);
-      if(s.asgn[a]!==""&&bon(a)>0)row.appendChild(h("span",{style:{color:"var(--grn)",fontSize:"0.76rem"}},
-        ["+"+bon(a)]));
-      if(s.asgn[a]!=="")row.appendChild(h("span",{style:{fontFamily:"var(--f1)",color:"var(--text)",fontWeight:"700",marginLeft:"auto"}},
-        [fin(a)+" ("+fm(fin(a))+")"]));
+
+      if (S.asgn[a]!=="" && bon(a)>0) {
+        const bs = el("span","",[ "+"+bon(a) ]);
+        bs.style.cssText = "color:var(--grn);font-size:0.9rem;font-weight:600";
+        row.appendChild(bs);
+      }
+      if (S.asgn[a]!=="") {
+        const fs = el("span","",[ fin(a)+" ("+fm(fin(a))+")" ]);
+        fs.style.cssText = "font-family:var(--f1);color:var(--text);font-weight:700;margin-left:auto;font-size:1rem";
+        row.appendChild(fs);
+      }
       card.appendChild(row);
     }
   }
 
-  if(s.step===3){
-    card.appendChild(h("div",{className:"section-title"},["Name Thy Champion"]));
-    const inp=h("input",{className:"name-input",value:s.charName,maxLength:"30",placeholder:"Enter name...",
-      onInput:(e)=>{state.charName=e.target.value;}});
+  // ── Step 3: Review ──
+  if (S.step===3) {
+    card.appendChild(el("div","st",["Name Thy Champion"]));
+    const inp = document.createElement("input");
+    inp.className = "ni";
+    inp.value = S.charName;
+    inp.maxLength = 30;
+    inp.placeholder = "Enter name...";
+    inp.addEventListener("input", (e) => { S.charName = e.target.value; });
     card.appendChild(inp);
-    const rg=h("div",{className:"review-grid"});
-    rg.innerHTML=`<div>Race: <span>${s.race}</span></div><div>Class: <span>${s.cls}</span></div>`;
+
+    const rg = el("div","rg");
+    rg.innerHTML = '<div>Race: <span>'+S.race+'</span></div><div>Class: <span>'+S.cls+'</span></div>';
     card.appendChild(rg);
-    const sg=h("div",{className:"stat-grid"});
-    for(const a of ABS){
-      const box=h("div",{className:"stat-box"});
-      box.innerHTML=`<div class="lbl">${a.toUpperCase()}</div><div class="val">${fin(a)}</div><div class="mod">${fm(fin(a))}</div>`;
+
+    const sg = el("div","sg");
+    for (const a of ABS) {
+      const box = el("div","sb");
+      box.innerHTML = '<div class="l">'+a.toUpperCase()+'</div><div class="v">'+fin(a)+'</div><div class="m">'+fm(fin(a))+'</div>';
       sg.appendChild(box);
     }
     card.appendChild(sg);
   }
 
-  // Nav
-  const nav=h("div",{className:"nav-row"});
-  if(s.step>0)nav.appendChild(h("button",{className:"btn-sec",onClick:()=>{state.step--;render();}},["← Back"]));
-  else nav.appendChild(h("div"));
-  if(s.step<3){
-    nav.appendChild(h("button",{className:"btn-pri",disabled:!ok,onClick:()=>{if(ok){state.step++;render();}}},["Next →"]));
+  // ── Nav buttons ──
+  const nav = el("div","nr");
+  if (S.step > 0) {
+    nav.appendChild(btn("← Back","bs",()=>{ S.step--; render(); }));
   } else {
-    nav.appendChild(h("button",{className:"btn-pri",disabled:!ok,onClick:()=>{
-      if(!ok)return;
-      const c=CLASSES[s.cls],ab={};ABS.forEach(a=>{ab[a]=fin(a);});
-      const cm=mo(ab.con),dm=mo(ab.dex);
-      let ac=c.ac;if(s.cls==="Wizard")ac=10+dm;if(s.cls==="Rogue")ac=12+dm;if(s.cls==="Ranger")ac=12+Math.min(dm,2);
-      state.char={name:s.charName.trim(),race:s.race,class:s.cls,level:1,xp:0,hp:c.hp0+cm,maxHp:c.hp0+cm,ac,ab,prof:2,
-        spd:RACES[s.race].spd,feat:c.feat,sp:c.sp,cantrips:c.cantrips||[],spells:c.spells||[],
+    nav.appendChild(document.createElement("div"));
+  }
+
+  if (S.step < 3) {
+    const nb = btn("Next →","bp",()=>{ if(ok){ S.step++; render(); } });
+    if (!ok) nb.disabled = true;
+    nav.appendChild(nb);
+  } else {
+    const nb = btn("⚔ Begin Quest ⚔","bp",()=>{
+      if (!ok) return;
+      const c=CLASSES[S.cls], ab={};
+      ABS.forEach(a=>{ ab[a]=fin(a); });
+      const cm=mo(ab.con), dm=mo(ab.dex);
+      let ac=c.ac; if(S.cls==="Wizard")ac=10+dm; if(S.cls==="Rogue")ac=12+dm; if(S.cls==="Ranger")ac=12+Math.min(dm,2);
+      S.char={name:S.charName.trim(),race:S.race,class:S.cls,level:1,xp:0,hp:c.hp0+cm,maxHp:c.hp0+cm,ac,ab,prof:2,
+        spd:RACES[S.race].spd,feat:c.feat,sp:c.sp,cantrips:c.cantrips||[],spells:c.spells||[],
         sMax:c.slots||0,sUsed:0,inv:[...c.eq],gold:10+Math.floor(Math.random()*100),cond:[]};
-      state.screen="game";render();startGame();
-    }},["⚔ Begin Quest ⚔"]));
+      S.screen="game"; render(); startGame();
+    });
+    if (!ok) nb.disabled = true;
+    nav.appendChild(nb);
   }
   card.appendChild(nav);
   wrap.appendChild(card);
   app.appendChild(wrap);
 
-  // Focus name input
-  if(s.step===3)setTimeout(()=>{const i=document.querySelector(".name-input");if(i)i.focus();},50);
+  // Auto-focus name input
+  if (S.step===3) setTimeout(()=>{ const i=document.querySelector(".ni"); if(i) i.focus(); },50);
 }
 
-async function startGame(){
-  await callDMAction("",true);
-}
+// ══════════════════════════════════════
+// GAME
+// ══════════════════════════════════════
+async function startGame() { await callDMAction("",true); }
 
-async function callDMAction(userMsg,isInit){
-  const ch=state.char,en=state.enemies,inC=state.combat;
-  state.loading=true;state.opts=[];render();
+async function callDMAction(userMsg, isInit) {
+  const ch=S.char, en=S.enemies, inC=S.combat;
+  S.loading=true; S.opts=[]; render();
 
   const sys=`You are a D&D 5e DM. Medieval tone. Max 2 short paragraphs. Be vivid but concise.
 PC:${ch.name} ${ch.race} ${ch.class} Lv${ch.level} HP:${ch.hp}/${ch.maxHp} AC:${ch.ac}
@@ -367,199 +445,203 @@ ${inC?"IN COMBAT":"EXPLORING"}
 Show dice:[d20:14+5=19 vs AC15 HIT]. Use 5e rules.
 Reply ONLY JSON:{"narrative":"story","log":[{"type":"combat","text":"x"}],"changes":{"hpChange":0,"goldChange":0,"addItems":[],"removeItems":[],"xp":0,"slotUsed":false,"combat":false,"enemies":[],"addConditions":[],"removeConditions":[]},"options":["A","B","C"]}`;
 
-  const apiMsgs=isInit
-    ?[{role:"user",content:"Begin a dramatic medieval D&D adventure opening scene!"}]
-    :[...state.msgs.slice(-8).map(m=>({role:m.role,content:m.text})),{role:"user",content:userMsg}];
+  const apiMsgs = isInit
+    ? [{role:"user",content:"Begin a dramatic medieval D&D adventure opening scene!"}]
+    : [...S.msgs.slice(-8).map(m=>({role:m.role,content:m.text})),{role:"user",content:userMsg}];
 
-  try{
-    const parsed=await askDM(sys,apiMsgs,s=>{state.status=s;render();});
-    state.status="";
-    const sc=parsed.changes||{};
-    const ch2=state.char;
-    if(sc.hpChange)ch2.hp=Math.max(0,Math.min(ch2.maxHp,ch2.hp+sc.hpChange));
-    if(sc.goldChange)ch2.gold=Math.max(0,ch2.gold+sc.goldChange);
-    if(sc.addItems?.length)ch2.inv.push(...sc.addItems);
-    if(sc.removeItems?.length)ch2.inv=ch2.inv.filter(x=>!sc.removeItems.includes(x));
-    if(sc.xp)ch2.xp+=sc.xp;
-    if(sc.slotUsed&&ch2.sUsed<ch2.sMax)ch2.sUsed++;
-    if(sc.addConditions?.length)ch2.cond=[...new Set([...ch2.cond,...sc.addConditions])];
-    if(sc.removeConditions?.length)ch2.cond=ch2.cond.filter(x=>!sc.removeConditions.includes(x));
-    if(sc.combat!==undefined)state.combat=sc.combat;
-    if(sc.enemies)state.enemies=sc.enemies;
-    if(parsed.log?.length)state.log=state.log.concat(parsed.log).slice(-50);
-    if(!isInit)state.msgs.push({role:"user",text:userMsg});
-    state.msgs.push({role:"assistant",text:parsed.narrative||"The DM nods silently..."});
-    state.opts=parsed.options||["Look around","Move forward","Check inventory"];
+  try {
+    const parsed = await askDM(sys, apiMsgs, s=>{ S.status=s; render(); });
+    S.status="";
+    const sc = parsed.changes||{};
+    if(sc.hpChange) ch.hp=Math.max(0,Math.min(ch.maxHp,ch.hp+sc.hpChange));
+    if(sc.goldChange) ch.gold=Math.max(0,ch.gold+sc.goldChange);
+    if(sc.addItems?.length) ch.inv.push(...sc.addItems);
+    if(sc.removeItems?.length) ch.inv=ch.inv.filter(x=>!sc.removeItems.includes(x));
+    if(sc.xp) ch.xp+=sc.xp;
+    if(sc.slotUsed && ch.sUsed<ch.sMax) ch.sUsed++;
+    if(sc.addConditions?.length) ch.cond=[...new Set([...ch.cond,...sc.addConditions])];
+    if(sc.removeConditions?.length) ch.cond=ch.cond.filter(x=>!sc.removeConditions.includes(x));
+    if(sc.combat!==undefined) S.combat=sc.combat;
+    if(sc.enemies) S.enemies=sc.enemies;
+    if(parsed.log?.length) S.log=S.log.concat(parsed.log).slice(-50);
+    if(!isInit) S.msgs.push({role:"user",text:userMsg});
+    S.msgs.push({role:"assistant",text:parsed.narrative||"The DM nods silently..."});
+    S.opts=parsed.options||["Look around","Move forward","Check inventory"];
     saveGame();
-  }catch(err){
-    state.status="";
-    state.msgs.push({role:"assistant",text:"⚠ "+err.message});
-    state.opts=["Retry"];
+  } catch(err) {
+    S.status="";
+    S.msgs.push({role:"assistant",text:"⚠ "+err.message});
+    S.opts=["Retry"];
   }
-  state.loading=false;
+  S.loading=false;
   render();
-  setTimeout(()=>{const n=document.querySelector(".narrative");if(n)n.scrollTop=n.scrollHeight;},60);
+  setTimeout(()=>{ const n=document.querySelector(".nar"); if(n) n.scrollTop=n.scrollHeight; },60);
 }
 
-function renderGame(app){
-  const ch=state.char;
-  const hp=ch.maxHp>0?(ch.hp/ch.maxHp)*100:0;
-  const wrap=h("div",{className:"game-wrap"});
+function handleAction(text) {
+  if(text==="Start Over"){clearSave();location.reload();return;}
+  if(text==="Retry"){S.msgs=S.msgs.filter(m=>!m.text.startsWith("⚠"));callDMAction("",true);return;}
+  S.input="";
+  callDMAction(text,false);
+}
 
-  // Sidebar
-  const sb=h("div",{className:"sidebar"});
-  sb.appendChild(h("div",{className:"char-name"},[ch.name]));
-  sb.appendChild(h("div",{className:"char-sub"},[`${ch.race} ${ch.class} • Level ${ch.level}`]));
+// ── Game Screen ──
+function renderGame(app) {
+  const ch = S.char;
+  const hp = ch.maxHp>0?(ch.hp/ch.maxHp)*100:0;
+  const wrap = el("div","gw");
 
-  const hpRow=h("div",{className:"hp-row"});
-  hpRow.innerHTML=`<span style="color:var(--dimr)">Hit Points</span><span><span style="color:${hp>50?"var(--grn)":hp>25?"var(--gold)":"var(--red)"}">${ch.hp}</span><span style="color:var(--border)">/${ch.maxHp}</span></span>`;
+  // ── Sidebar ──
+  const sb = el("div","sd");
+  sb.appendChild(el("div","cn",[ch.name]));
+  sb.appendChild(el("div","cx",[ch.race+" "+ch.class+" • Level "+ch.level]));
+
+  // HP
+  const hpRow = el("div","hr");
+  hpRow.innerHTML = '<span>Hit Points</span><span style="color:'+(hp>50?"var(--grn)":hp>25?"var(--gold)":"var(--red)")+'">'+ch.hp+'<span style="color:var(--border)">/'+ch.maxHp+'</span></span>';
   sb.appendChild(hpRow);
-  const hpTrack=h("div",{className:"hp-track"});
-  hpTrack.appendChild(h("div",{className:"hp-fill",style:{width:hp+"%",background:hp>50?"var(--grn)":hp>25?"var(--gold)":"var(--red)"}}));
+  const hpTrack = el("div","ht");
+  const hpFill = document.createElement("div");
+  hpFill.className="hf";
+  hpFill.style.width=hp+"%";
+  hpFill.style.background=hp>50?"var(--grn)":hp>25?"var(--gold)":"var(--red)";
+  hpTrack.appendChild(hpFill);
   sb.appendChild(hpTrack);
 
-  const ms=h("div",{className:"mini-stats"});
-  for(const[l,v]of[["AC",ch.ac],["SPD",ch.spd],["PROF","+"+ch.prof]]){
-    const d=h("div",{className:"mini-stat"});
-    d.innerHTML=`<div class="lbl">${l}</div><div class="val">${v}</div>`;
+  // Mini stats
+  const ms = el("div","ms");
+  for(const[l,v] of [["AC",ch.ac],["SPD",ch.spd],["PROF","+"+ch.prof]]){
+    const d=el("div","mi");
+    d.innerHTML='<div class="l">'+l+'</div><div class="v">'+v+'</div>';
     ms.appendChild(d);
   }
   sb.appendChild(ms);
 
-  const ag=h("div",{className:"ab-grid"});
+  // Abilities
+  const ag = el("div","ag");
   for(const a of ABS){
-    const d=h("div",{className:"ab-box"});
-    d.innerHTML=`<div class="lbl">${a.toUpperCase()}</div><div class="val">${ch.ab[a]}</div><div class="mod">${fm(ch.ab[a])}</div>`;
+    const d=el("div","ax");
+    d.innerHTML='<div class="l">'+a.toUpperCase()+'</div><div class="v">'+ch.ab[a]+'</div><div class="m">'+fm(ch.ab[a])+'</div>';
     ag.appendChild(d);
   }
   sb.appendChild(ag);
 
+  // Spell slots
   if(ch.sp){
-    sb.appendChild(h("div",{className:"side-label"},["Spell Slots"]));
-    const sl=h("div",{className:"slots"});
-    for(let i=0;i<ch.sMax;i++)sl.appendChild(h("span",{className:"slot "+(i<(ch.sMax-ch.sUsed)?"full":"empty")},["◆"]));
+    sb.appendChild(el("div","sl",["Spell Slots"]));
+    const sl=el("div","slt");
+    for(let i=0;i<ch.sMax;i++){
+      const sp=document.createElement("span");
+      sp.className=i<(ch.sMax-ch.sUsed)?"on":"off";
+      sp.textContent="◆";
+      sl.appendChild(sp);
+    }
     sb.appendChild(sl);
   }
 
-  sb.appendChild(h("div",{className:"divider"}));
-  sb.appendChild(h("div",{className:"side-label"},["Gold"]));
-  sb.appendChild(h("div",{className:"side-val"},[ch.gold+" gp"]));
-  sb.appendChild(h("div",{className:"side-label",style:{marginTop:"4px"}},["Experience"]));
-  sb.appendChild(h("div",{style:{color:"var(--dim)",fontSize:"0.78rem"}},[ch.xp+"/300"]));
-  sb.appendChild(h("div",{className:"divider"}));
-  sb.appendChild(h("div",{className:"side-label"},["Equipment"]));
-  for(const item of ch.inv)sb.appendChild(h("div",{className:"side-item"},["• "+item]));
+  sb.appendChild(el("div","dv"));
+  sb.appendChild(el("div","sl",["Gold"]));
+  sb.appendChild(el("div","sv",[ch.gold+" gp"]));
+  const xpL=el("div","sl",["Experience"]); xpL.style.marginTop="6px"; sb.appendChild(xpL);
+  const xpV=el("div","",[ ch.xp+"/300" ]); xpV.style.cssText="color:var(--text2);font-size:0.9rem"; sb.appendChild(xpV);
+  sb.appendChild(el("div","dv"));
+  sb.appendChild(el("div","sl",["Equipment"]));
+  for(const item of ch.inv) sb.appendChild(el("div","si",["• "+item]));
 
-  if(state.log.length){
-    const logWrap=h("div",{style:{marginTop:"auto",paddingTop:"6px"}});
-    logWrap.appendChild(h("div",{className:"divider"}));
-    logWrap.appendChild(h("div",{className:"side-label"},["Chronicle"]));
-    for(const l of state.log.slice(-6)){
-      logWrap.appendChild(h("div",{className:"log-entry",style:{color:l.type==="combat"?"var(--red)":l.type==="heal"?"var(--grn)":"var(--dim)"}},[l.text]));
+  // Log
+  if(S.log.length){
+    const lw=document.createElement("div");
+    lw.style.cssText="margin-top:auto;padding-top:8px";
+    lw.appendChild(el("div","dv"));
+    lw.appendChild(el("div","sl",["Chronicle"]));
+    for(const l of S.log.slice(-6)){
+      const e=el("div","le",[l.text]);
+      e.style.color=l.type==="combat"?"var(--red)":l.type==="heal"?"var(--grn)":"var(--dim)";
+      lw.appendChild(e);
     }
-    sb.appendChild(logWrap);
+    sb.appendChild(lw);
   }
   wrap.appendChild(sb);
 
-  // Main
-  const main=h("div",{className:"main-panel"});
+  // ── Main Panel ──
+  const mp = el("div","mp");
 
-  if(state.combat){
-    const banner=h("div",{className:"combat-banner"});
-    let bhtml="⚔ COMBAT ⚔";
-    if(state.enemies.length)bhtml+=`<div class="combat-foes">${state.enemies.map(e=>e.name+": "+e.hp+"/"+e.maxHp+"hp AC"+e.ac).join(" • ")}</div>`;
-    banner.innerHTML=bhtml;
-    main.appendChild(banner);
+  // Combat banner
+  if(S.combat){
+    const cb=el("div","cb");
+    let html="⚔ COMBAT ⚔";
+    if(S.enemies.length) html+='<div class="cf">'+S.enemies.map(e=>e.name+": "+e.hp+"/"+e.maxHp+"hp AC"+e.ac).join(" • ")+'</div>';
+    cb.innerHTML=html;
+    mp.appendChild(cb);
   }
 
-  const narr=h("div",{className:"narrative"});
-  if(!state.msgs.length&&!state.loading&&!state.status){
-    narr.appendChild(h("div",{style:{color:"var(--dimr)",textAlign:"center",marginTop:"3rem",fontFamily:"var(--f1)",fontSize:"1rem"}},["Thy quest awaits..."]));
+  // Narrative
+  const nar = el("div","nar");
+  if(!S.msgs.length && !S.loading && !S.status){
+    const ph=el("div","",["Thy quest awaits..."]);
+    ph.style.cssText="color:var(--dim);text-align:center;margin-top:3rem;font-family:var(--f1);font-size:1.1rem";
+    nar.appendChild(ph);
   }
-  for(const m of state.msgs){
+  for(const m of S.msgs){
     if(m.role==="user"){
-      const d=h("div",{className:"user-msg"});
-      d.appendChild(h("div",{className:"user-tag"},["THY ACTION"]));
-      d.appendChild(h("div",{style:{whiteSpace:"pre-wrap"}},[m.text]));
-      narr.appendChild(d);
-    }else{
-      narr.appendChild(h("div",{className:"dm-msg",style:{whiteSpace:"pre-wrap"}},[m.text]));
+      const d=el("div","um");
+      d.appendChild(el("div","ut",["THY ACTION"]));
+      const t=el("div","",[ m.text ]); t.style.whiteSpace="pre-wrap"; t.style.color="var(--text)";
+      d.appendChild(t);
+      nar.appendChild(d);
+    } else {
+      const d=el("div","dm");
+      d.style.whiteSpace="pre-wrap";
+      d.textContent=m.text;
+      nar.appendChild(d);
     }
   }
-  if(state.loading||state.status){
-    narr.appendChild(h("div",{className:"status-msg"},[state.status||"The DM weaves fate..."]));
+  if(S.loading||S.status){
+    nar.appendChild(el("div","stm",[S.status||"The DM weaves fate..."]));
   }
-  if(!state.loading&&state.opts.length){
-    const or=h("div",{className:"opts-row"});
-    for(const o of state.opts){
-      or.appendChild(h("button",{className:"opt-chip",onClick:()=>handleAction(o)},[o]));
+  if(!S.loading && S.opts.length){
+    const or=el("div","opr");
+    for(const o of S.opts){
+      or.appendChild(btn(o,"oc",()=>handleAction(o)));
     }
-    narr.appendChild(or);
+    nar.appendChild(or);
   }
-  main.appendChild(narr);
+  mp.appendChild(nar);
 
-  // Input
-  const ia=h("div",{className:"input-area"});
-  const ta=h("textarea",{className:"text-input",rows:"2",placeholder:"Declare thy action...",disabled:state.loading,
-    onKeydown:(e)=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();handleSubmit();}},
-    onInput:(e)=>{state.input=e.target.value;}});
-  ta.value=state.input;
+  // Input area
+  const ia = el("div","ia");
+  const ta = document.createElement("textarea");
+  ta.className="ti"; ta.rows=2; ta.placeholder="Declare thy action...";
+  ta.value=S.input;
+  if(S.loading) ta.disabled=true;
+  ta.addEventListener("input",(e)=>{ S.input=e.target.value; });
+  ta.addEventListener("keydown",(e)=>{ if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();doSubmit();} });
   ia.appendChild(ta);
-  ia.appendChild(h("button",{className:"send-btn",disabled:state.loading,onClick:handleSubmit},["⚔"]));
-  main.appendChild(ia);
 
-  wrap.appendChild(main);
+  const sb2=btn("⚔","se",doSubmit);
+  if(S.loading) sb2.disabled=true;
+  ia.appendChild(sb2);
+  mp.appendChild(ia);
+
+  wrap.appendChild(mp);
   app.appendChild(wrap);
 
-  // Scroll
-  setTimeout(()=>{const n=document.querySelector(".narrative");if(n)n.scrollTop=n.scrollHeight;},30);
+  // Scroll to bottom
+  setTimeout(()=>{ const n=document.querySelector(".nar"); if(n) n.scrollTop=n.scrollHeight; },30);
 }
 
-function handleAction(text){
-  if(text==="Start Over"){clearSave();location.reload();return;}
-  if(text==="Retry"){state.msgs=state.msgs.filter(m=>!m.text.startsWith("⚠"));callDMAction("",true);return;}
-  state.input="";
-  callDMAction(text,false);
+function doSubmit(){
+  const t=S.input.trim();
+  if(t&&!S.loading){ S.input=""; callDMAction(t,false); }
 }
 
-function handleSubmit(){
-  const t=state.input.trim();
-  if(t&&!state.loading){state.input="";callDMAction(t,false);}
+// ══════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════
+if (hasSave()) {
+  S.screen = "resume";
 }
-
-// Start — check for saved game
-if(hasSave()){
-  state.screen="resume";
-  renderResume();
-} else {
-  render();
-}
-
-function renderResume(){
-  const app=$("app");
-  app.innerHTML="";
-  const wrap=h("div",{className:"create-wrap"});
-  const card=h("div",{className:"create-card",style:{textAlign:"center"}});
-  card.appendChild(h("div",{className:"create-title"},["⚔ D&D AI Dungeon Master ⚔"]));
-
-  // Peek at save to show character info
-  let info="";
-  try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));info=s.char.name+" — "+s.char.race+" "+s.char.class+" (Lv"+s.char.level+", "+s.char.hp+"/"+s.char.maxHp+" HP)";}catch(e){}
-  if(info) card.appendChild(h("div",{style:{fontFamily:"var(--f2)",color:"var(--dim)",fontSize:"0.92rem",margin:"1rem 0 0.3rem"}},[info]));
-
-  card.appendChild(h("div",{style:{fontFamily:"var(--f2)",color:"var(--dimr)",fontSize:"0.85rem",margin:"0.5rem 0 1.5rem"}},["A saved quest was found."]));
-
-  card.appendChild(h("button",{className:"btn-pri",style:{display:"block",width:"100%",padding:"0.7rem",fontSize:"0.95rem",marginBottom:"0.75rem"},onClick:()=>{
-    loadGame();render();
-  }},["⚔ Continue Quest"]));
-
-  card.appendChild(h("button",{className:"btn-sec",style:{display:"block",width:"100%",padding:"0.6rem",fontSize:"0.88rem"},onClick:()=>{
-    clearSave();state.screen="create";render();
-  }},["🗡 New Adventure"]));
-
-  wrap.appendChild(card);
-  app.appendChild(wrap);
-}
+render();
 </script>
 </body>
 </html>
