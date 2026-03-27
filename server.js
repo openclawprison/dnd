@@ -10,8 +10,8 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // Rate limiting - simple in-memory
 const rateLimit = {};
-const RATE_WINDOW = 60000; // 1 min
-const RATE_MAX = 15; // 15 requests per minute per IP
+const RATE_WINDOW = 60000;
+const RATE_MAX = 15;
 
 function checkRate(ip) {
   const now = Date.now();
@@ -22,7 +22,6 @@ function checkRate(ip) {
   return true;
 }
 
-// Clean up rate limit entries every 5 min
 setInterval(() => {
   const now = Date.now();
   for (const ip in rateLimit) {
@@ -30,6 +29,141 @@ setInterval(() => {
     if (!rateLimit[ip].length) delete rateLimit[ip];
   }
 }, 300000);
+
+// Helper: clean narrative text of any JSON artifacts
+function cleanNarrativeText(text) {
+  if (!text || typeof text !== "string") return "The adventure continues...";
+  let t = text;
+  t = t.replace(/```json[\s\S]*?```/g, "");
+  t = t.replace(/```[\s\S]*?```/g, "");
+  t = t.replace(/\{[\s\S]*?"narrative"[\s\S]*?\}/g, "");
+  t = t.replace(/\{[\s\S]*?"changes"[\s\S]*?\}/g, "");
+  t = t.replace(/\{[\s\S]*?"options"[\s\S]*?\}/g, "");
+  t = t.replace(/\{[\s\S]*?"hpChange"[\s\S]*?\}/g, "");
+  t = t.replace(/\{[\s\S]*?"log"[\s\S]*?\}/g, "");
+  t = t.replace(/\{[\s\S]*?"roll"[\s\S]*?\}/g, "");
+  t = t.replace(/^\s*[\{\}\[\]]\s*$/gm, "");
+  t = t.replace(/^\s*"[a-zA-Z]+":\s*.+$/gm, "");
+  t = t.replace(/\n{3,}/g, "\n\n").trim();
+  return t || "The adventure continues...";
+}
+
+// Helper: ensure value is a plain string
+function ensureString(val) {
+  if (typeof val === "string") return val;
+  if (val && typeof val === "object" && val.name) return val.name;
+  if (val && typeof val === "object") {
+    try { return JSON.stringify(val); } catch(e) { return String(val); }
+  }
+  return String(val || "");
+}
+
+// Helper: parse model JSON response with aggressive cleaning
+function parseModelResponse(raw) {
+  let parsed;
+  try {
+    let cleaned = raw.trim();
+    // Remove ALL markdown fences
+    cleaned = cleaned.replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
+    // Find outermost JSON object
+    const firstBrace = cleaned.indexOf("{");
+    const lastBrace = cleaned.lastIndexOf("}");
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+    }
+    parsed = JSON.parse(cleaned);
+
+    // Validate and clean narrative
+    if (parsed.narrative && typeof parsed.narrative === "object") {
+      parsed.narrative = parsed.narrative.text || parsed.narrative.content || JSON.stringify(parsed.narrative);
+    }
+    parsed.narrative = cleanNarrativeText(parsed.narrative || "");
+    if (!parsed.narrative) parsed.narrative = "The DM surveys the scene...";
+
+    // Ensure options are plain strings
+    if (parsed.options && Array.isArray(parsed.options)) {
+      parsed.options = parsed.options.map(o => ensureString(o));
+    } else {
+      parsed.options = ["Explore the area", "Talk to nearby characters", "Check my equipment", "Continue onward"];
+    }
+
+    // Filter out generic options
+    const generic = ["look around", "move forward", "check inventory"];
+    if (parsed.options.every(o => generic.includes(o.toLowerCase()))) {
+      parsed.options = ["Explore the area", "Talk to nearby characters", "Check my equipment", "Continue onward"];
+    }
+
+    // Ensure log entries are clean
+    if (parsed.log && Array.isArray(parsed.log)) {
+      parsed.log = parsed.log.map(l => ({
+        type: ensureString(l.type || "info"),
+        text: ensureString(l.text || "")
+      })).filter(l => l.text);
+    } else {
+      parsed.log = [];
+    }
+
+    // Ensure changes exist
+    if (!parsed.changes || typeof parsed.changes !== "object") {
+      parsed.changes = {};
+    }
+
+    // Ensure newNPCs are strings
+    if (parsed.changes.newNPCs && Array.isArray(parsed.changes.newNPCs)) {
+      parsed.changes.newNPCs = parsed.changes.newNPCs.map(n => ensureString(n));
+    }
+
+    // Ensure enemies are proper objects
+    if (parsed.changes.enemies && Array.isArray(parsed.changes.enemies)) {
+      parsed.changes.enemies = parsed.changes.enemies.map(e => {
+        if (typeof e === "string") return { name: e, hp: 10, maxHp: 10, ac: 12 };
+        return {
+          name: ensureString(e.name || "Enemy"),
+          hp: Number(e.hp) || 10,
+          maxHp: Number(e.maxHp) || 10,
+          ac: Number(e.ac) || 12
+        };
+      });
+    }
+
+    // Clean roll if present
+    if (parsed.roll && typeof parsed.roll === "object") {
+      parsed.roll = {
+        desc: ensureString(parsed.roll.desc || ""),
+        ability: ensureString(parsed.roll.ability || "str"),
+        target: Number(parsed.roll.target) || 10,
+        type: ensureString(parsed.roll.type || "check")
+      };
+      if (!parsed.roll.desc) parsed.roll = null;
+    } else {
+      parsed.roll = null;
+    }
+
+    return parsed;
+
+  } catch (e) {
+    // Total parse failure — extract whatever readable text we can
+    let fallback = raw
+      .replace(/```json[\s\S]*?```/g, "")
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/\{[\s\S]*\}/g, "")
+      .trim();
+    if (!fallback || fallback.length < 10) {
+      // Try to extract just the narrative value
+      const narMatch = raw.match(/"narrative"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+      if (narMatch) fallback = narMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"');
+    }
+    if (!fallback) fallback = "The adventure continues...";
+
+    return {
+      narrative: cleanNarrativeText(fallback),
+      roll: null,
+      log: [],
+      changes: {},
+      options: ["Explore the area", "Talk to nearby characters", "Check my equipment", "Continue onward"]
+    };
+  }
+}
 
 app.post("/api/dm", async (req, res) => {
   if (!ANTHROPIC_API_KEY) {
@@ -74,31 +208,9 @@ app.post("/api/dm", async (req, res) => {
     }
 
     const raw = data.content.map(c => c.text || "").join("");
-    
-    // Parse JSON from model response - handle various formats
-    let parsed;
-    try {
-      let cleaned = raw.trim();
-      // Remove markdown fences
-      cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-      // Remove any leading/trailing text before/after JSON
-      const firstBrace = cleaned.indexOf("{");
-      const lastBrace = cleaned.lastIndexOf("}");
-      if (firstBrace !== -1 && lastBrace !== -1) {
-        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
-      }
-      parsed = JSON.parse(cleaned);
-    } catch (e) {
-      // Fallback: use raw text as narrative
-      parsed = {
-        narrative: raw,
-        log: [],
-        changes: {},
-        options: ["Look around", "Move forward", "Check inventory"]
-      };
-    }
-
+    const parsed = parseModelResponse(raw);
     res.json(parsed);
+
   } catch (err) {
     console.error("Server error:", err);
     res.status(500).json({ error: "Failed to reach AI service" });
@@ -127,25 +239,24 @@ You will receive the current story memory (may be empty) and recent game message
 
 RESPOND ONLY WITH JSON (no markdown, no backticks):
 {
-  "summary": "A 2-4 sentence summary of the overall story arc so far. What quest is the player on? What major events happened?",
+  "summary": "A 2-4 sentence summary of the overall story arc so far.",
   "relationships": [
-    {"name":"NPC Name","relation":"ally/enemy/neutral/merchant/quest-giver","notes":"Brief note about the relationship, agreements, promises made"}
+    {"name":"NPC Name","relation":"ally/enemy/neutral/merchant/quest-giver","notes":"Brief note about the relationship"}
   ],
   "agreements": ["Agreement 1: exact terms", "Agreement 2: exact terms"],
-  "keyEvents": ["Event 1: what happened and why it matters", "Event 2"],
-  "activeQuests": ["Quest 1: objective and current status", "Quest 2"],
-  "secrets": ["Secret 1: something the player learned that's important"],
+  "keyEvents": ["Event 1: what happened and why it matters"],
+  "activeQuests": ["Quest 1: objective and current status"],
+  "secrets": ["Secret 1: something the player learned"],
   "threats": ["Threat 1: ongoing danger or enemy"]
 }
 
 CRITICAL RULES:
-- NEVER drop information from the existing memory unless it's been resolved
-- Agreements and promises must be preserved EXACTLY — these are the #1 thing players notice when forgotten
+- NEVER drop information from existing memory unless resolved
+- Agreements and promises must be preserved EXACTLY
 - Add new information from recent messages
-- Keep each field concise but complete
-- If current memory is empty, create everything fresh from the recent messages`;
+- Keep each field concise but complete`;
 
-  const msgContent = recentMessages.map(m => `[${m.role}]: ${m.text}`).join("\n\n");
+  const msgContent = recentMessages.map(m => `[${m.role}]: ${ensureString(m.text)}`).join("\n\n");
   const userMsg = `CURRENT MEMORY:\n${currentMemory ? JSON.stringify(currentMemory) : "(empty - first summary)"}\n\nRECENT MESSAGES:\n${msgContent}\n\nProduce the updated memory JSON.`;
 
   try {
@@ -174,13 +285,29 @@ CRITICAL RULES:
     const raw = (data.content || []).map(c => c.text || "").join("");
     let parsed;
     try {
-      let cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+      let cleaned = raw.trim().replace(/```json\s*/gi, "").replace(/```\s*/gi, "").trim();
       const fb = cleaned.indexOf("{");
       const lb = cleaned.lastIndexOf("}");
       if (fb !== -1 && lb !== -1) cleaned = cleaned.substring(fb, lb + 1);
       parsed = JSON.parse(cleaned);
+      // Ensure relationships are clean
+      if (parsed.relationships && Array.isArray(parsed.relationships)) {
+        parsed.relationships = parsed.relationships.map(r => {
+          if (typeof r === "string") return { name: r, relation: "unknown", notes: "" };
+          return {
+            name: ensureString(r.name || "Unknown"),
+            relation: ensureString(r.relation || "unknown"),
+            notes: ensureString(r.notes || "")
+          };
+        });
+      }
+      // Ensure all arrays contain strings
+      ["agreements","keyEvents","activeQuests","secrets","threats"].forEach(key => {
+        if (parsed[key] && Array.isArray(parsed[key])) {
+          parsed[key] = parsed[key].map(v => ensureString(v));
+        }
+      });
     } catch (e) {
-      // Return basic structure on parse failure
       parsed = {
         summary: "Story summary unavailable.",
         relationships: [],
